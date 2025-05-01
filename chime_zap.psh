@@ -1,0 +1,34 @@
+#!/usr/bin/env psrsh
+
+# A PSRSH script to conduct RFI mitigation on CHIME/Pulsar fold-mode data.
+
+#########################
+# Manual excision steps #
+#########################
+
+# Prior to September 2020, the vast majority of RFI originated from either
+# the LTE cellular network, digital TV stations and a handful of narrow-band
+# emitters.
+zap chan 0 34-47 113-178 185-210 218-254 552-568 584-597 631-644 677-693 754-762 788-791 854-860 873-875 887
+
+# The local 5G network signal came online gradually over a few days, thus
+# only part of the nominal 5G band was initially corrupted. This affected
+# data between: August 30-31, 2020, i.e., 59091 <= MJD < 59093, chans=444-469
+if ($int[0]:mjd>=59091 && $int[0]:mjd<59093) zap chan 444-469
+
+# The 5G network signal came fully online on: September 1, 2020, i.e., MJD >= 59093, chans=405-469
+if ($int[0]:mjd>=59093) zap chan 405-469
+
+# A new RFI band (origin unknown) appeared on: November 5, 2021, i.e., MJD >= 59523, chans=83-107
+if ($int[0]:mjd>=59523) zap chan 83-107
+
+# Also include list of additional commonly-corrupted channels, from Emmanuel Fonseca
+zap chan 572 575 767 772 799 808 846 882 895
+
+# At this point, there may well be several channels or subintegrations
+# where a large fraction of data have been flagged. Extend the mask by
+# zapping channels where >75% of subintegrations are flagged AND by
+# zapping subintegrations where >75% of channels are flagged.
+zap extend tcutoff=0.75 fcutoff=0.75
+zap extend
+
