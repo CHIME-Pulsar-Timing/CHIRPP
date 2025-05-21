@@ -218,6 +218,10 @@ find_most_common() {
     printf '%s\n' "${array[@]}" | sort | uniq -c | sort -nr | head -n1 | awk '{print $2}'
 }
 
+# Get most common DM value
+common_dm=$(find_most_common $dm)
+echo "Most common DM value: $common_dm"
+
 # Function to check array against the most common value and log mismatches
 check_array() {
     local -n array=$1
@@ -253,7 +257,6 @@ check_array nchan "nchan"
 check_array freq "freq"
 check_array bw "bw"
 check_array npol "npol"
-check_array dm "dm"
 echo ""
 
 # Create a new file that lists a filename only once from all *Fail.log files

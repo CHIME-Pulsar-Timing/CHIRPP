@@ -14,71 +14,8 @@ python find_nchan.py  # Uses the default '*.bmwt.zap'
 python find_nchan.py -e clfd # Specify which extension to run on
 """
 
-import numpy as np
-import subprocess
 import argparse
-
-
-def get_scrunch_factor(snr_25pct, snr_threshold=8, mean_nsubint=1):
-    """
-    Determine the power of two to frequency scrunch by,
-    given a S/N threshold and the 25th percentile S/N.
-    """
-
-    scrunch_factor = ((snr_threshold / snr_25pct) ** 2) // mean_nsubint
-    if scrunch_factor < 1:
-        # Do not scrunch further
-        return 1
-    power = 1
-    # Always default to a higher power (fewer subbands).
-    # Recall, fewer subbands means more signal in each channel,
-    # ensuring no more than 25% being cut.
-    while power <= scrunch_factor:
-        # Increment by 2 e.g. 2, 4, 8...
-        power *= 2
-    return power
-
-
-def get_snr_pct(percentile=25, extension=".bmwt.zap", max_subint=3600.0, timfile=None):
-    """
-    Determine the S/N value that excludes {percentile}% of the distribution,
-    given either a .tim file or a collection of profiles.
-    Also return the mean S/N and the mean number of subints per file (if applicable)
-    """
-    if timfile:
-        tim = open(timfile, "r")
-        tfr = tim.read()
-        tim.close()
-        snrs = np.array(
-            [
-                float(line.split("-snr")[1].split()[0])
-                for line in tfr.split("\n")
-                if "-snr" in line
-                and (not line.startswith("C") or line.startswith("CHIME"))
-            ]
-        )
-        snrs = np.array([x for x in snrs if not np.isnan(x)])
-        return np.percentile(snrs, percentile), np.mean(snrs), 1
-    else:
-        subprocess.run(
-            f"psrstat -c snr,length -j DFTp -Q *{extension} > snrs.txt", shell=True
-        )
-        _, snrs, lengths = np.genfromtxt("snrs.txt").T
-        # Later, we'll need the mean number of subints. More than one subint
-        # means lower TOA S/N because we aren't fully scrunching in time.
-        mean_nsubint = max(1, 1 + int(np.mean(lengths) / max_subint))
-        return np.percentile(snrs, percentile), np.mean(snrs), mean_nsubint
-
-
-def get_nchan(scrunch_factor, min_nchan=4, nchan_initial=1024):
-    scrunch_factor = min(scrunch_factor, nchan_initial // min_nchan)
-    if nchan_initial % scrunch_factor != 0:
-        print(
-            f"error: invalid scrunch_factor! {nchan_initial} not divisible by {scrunch_factor}!"
-        )
-        exit(1)
-    return nchan_initial // scrunch_factor
-
+from CHIRPP_utils import get_nchan, get_scrunch_factor, get_snr_pct
 
 if __name__ == "__main__":
     # Set up argparse to handle the command line input with flag -e

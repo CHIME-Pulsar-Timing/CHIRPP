@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Configuration file for CHIME TOA generation for the quasi-NANOGrav pipeline version 2
+# Configuration file for CHIME/Pulsar data processing and TOA generation
+# Based on the pipeline created for the NANOGrav 20-year data set
 
 ###########################################################
 ##                     Paths to input                    ##
@@ -18,6 +19,10 @@ par_directory="${HOME}/projects/rrg-istairs-ad/DR3/NANOGrav_15y/par/tempo2"
 # This variable is output by allParamCheck.sh 
 template_nbin=512 # Most recent nbin value
 
+# This variable is output by allParamCheck.sh 
+dm=false # Most common DM value in file headers
+         # A value of "false" will skip the step of updating header DM values
+         # A value of "ephemeris" will use the DM value in the provided ephemeris
 # Maximum subint duration in seconds (lesser of 1 hour or 2.5% of orbital period, if any)
 # Note: the scrunch step is designed to produce subints of equal length.
 # So if files have multiple subints, their length will likely be shorter than this.
@@ -30,7 +35,7 @@ nsubbands=64
 template_ext=".ftp" # ex: .zap or _trimmed.fits
 
 # Flags to use in each TOA saved in the *.tim file
-tim_flags="-f CHIME -be CHIME -fe Rcvr_CHIME -proc chimeograv -pta NANOGrav"
+tim_flags="-f CHIME -be CHIME -fe Rcvr_CHIME"
 
 # Smoothed template filename (.sm)
 template="added.trimmed.sm"

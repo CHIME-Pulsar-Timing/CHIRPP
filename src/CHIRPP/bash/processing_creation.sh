@@ -53,7 +53,14 @@ remove_file_if_exists "$clean_txt"
 for beam in $beam_variations; do
     pulsarbeam="${pulsar_name}_${beam}"
     # Install ephemeris before averaging to ensure best data quality (Bradley Meyers)
-    echo "for f in \$(ls CHIME*${beam}*.ar); do pam -p -E ${par_file} -a PSRFITS -u . \$f >> ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.err; done" >> "$ephem_txt"
+    # Also update header DMs, if desired
+    if [ "$dm" = "ephemeris" ]; then
+        echo "for f in \$(ls CHIME*${beam}*.ar); do pam -p -E ${par_file} --update_dm -a PSRFITS -u . \$f >> ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.err; done" >> "$ephem_txt"
+    elif [ "$dm" = true ]; then
+        echo "for f in \$(ls CHIME*${beam}*.ar); do pam -p -E ${par_file} -d ${dm} -a PSRFITS -u . \$f >> ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.err; done" >> "$ephem_txt"
+    else
+        echo "for f in \$(ls CHIME*${beam}*.ar); do pam -p -E ${par_file} -a PSRFITS -u . \$f >> ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsarbeam}-\${SLURM_JOB_ID}.err; done" >> "$ephem_txt"
+    fi
     # Zap known bad channels (5G zapping from Bradley plus list of commonly bad channels from Emmanuel)
     echo "for f in \$(ls CHIME*${beam}*.ar); do psrsh chime_zap.psh -e ar.zap \$f >> clean5G_${pulsarbeam}-\${SLURM_JOB_ID}.out 2>>clean5G_${pulsarbeam}-\${SLURM_JOB_ID}.err; done" >> "$clean5G_txt"
     # Run clfd
