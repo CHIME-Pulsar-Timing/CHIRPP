@@ -82,7 +82,7 @@ def edit_lines(fname, param_dict):
     a = subprocess.run(f"mv {fname_new} {fname}", shell=True)
 
 
-def get_template_nbin(outfile_paramcheck):
+def get_nbin_dm(outfile_paramcheck):
     template_nbin = int(
         subprocess.run(
             f"cat {outfile_paramcheck} | grep template_nbin | awk -F= "
@@ -93,7 +93,17 @@ def get_template_nbin(outfile_paramcheck):
         .stdout.decode("utf-8")
         .strip("\n")
     )
-    return template_nbin
+    dm = float(
+        subprocess.run(
+            f"cat {outfile_paramcheck} | grep common_dm | awk -F= "
+            + "'{print $2}' | awk '{print $1}'",
+            shell=True,
+            stdout=subprocess.PIPE,
+        )
+        .stdout.decode("utf-8")
+        .strip("\n")
+    )
+    return template_nbin, dm
 
 
 def pathcheck(path):

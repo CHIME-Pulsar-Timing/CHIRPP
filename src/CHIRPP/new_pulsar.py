@@ -139,6 +139,11 @@ parser.add_argument(
     help="TOA flags in the format '-f=-f CHIME [...]' (including the quotes).",
 )
 parser.add_argument(
+    "--par_dm",
+    action="store_true",
+    help="Update the file header DMs to the value in the provided par file.",
+)
+parser.add_argument(
     "--min_nchan",
     type=int,
     default=8,
@@ -395,11 +400,14 @@ else:  # If not running allParamCheck.sh, use most recent output file
 if outfile_paramcheck:
     template_nbin, dm = get_nbin_dm(outfile_paramcheck)
     print(f"\ntemplate_nbin from {outfile_paramcheck}: {template_nbin}\n")
-    print(f"\nDM from {outfile_paramcheck}: {dm}\n")
+    if args.par_dm:
+        print("Using DM from par file.")
+        dm = "ephemeris"
+    else:
+        print(f"\nDM from {outfile_paramcheck}: {dm}\n")
 else:
     print(f"\nNo allParamCheck_{args.pulsar}-[jobID].out found.\n")
     template_nbin = None
-    dm = None
     if args.force_proceed:
         print(
             "Proceeding with template_nbin value stored in config.sh, will not update DMs.\n"
@@ -426,29 +434,28 @@ else:
                     break
                 else:
                     print("You must enter an integer power of two.\n")
-        while not dm:
-            print(
-                "Press Enter to continue without updating header DMs, or type in your desired value (in pc/cc)."
-            )
-            dm_str = input(
-                'You can also type "ephemeris" to use the DM value in your par file.\n'
-            )
-            try:
-                dm = float(dm_str.strip())
-                if dm < 0.0:
-                    dm = None
-                    print(
-                        'You must enter a non-negative number (in pc/cc) or "ephemeris".\n'
-                    )
-            except ValueError:
-                if dm_str == "":
-                    break
-                elif dm_str == "ephemeris":
-                    dm = dm_str
-                else:
-                    print(
-                        'You must enter a non-negative number (in pc/cc) or "ephemeris".\n'
-                    )
+        if args.par_dm:
+            print("Using DM from par file.")
+            dm = "ephemeris"
+        else:
+            dm = None
+            while not dm:
+                print(
+                    "Press Enter to continue without updating header DMs, or type in your desired value (in pc/cc)."
+                )
+                dm_str = input(
+                    "You can also re-run with '--par_dm' to use the DM value in your par file.\n"
+                )
+                try:
+                    dm = float(dm_str.strip())
+                    if dm < 0.0:
+                        dm = None
+                        print("You must enter a non-negative number (in pc/cc).\n")
+                except ValueError:
+                    if dm_str == "":
+                        break
+                    else:
+                        print("You must enter a non-negative number (in pc/cc).\n")
 
 
 print("Editing config.sh\n")

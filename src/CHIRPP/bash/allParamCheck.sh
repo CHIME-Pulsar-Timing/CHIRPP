@@ -220,7 +220,7 @@ find_most_common() {
 
 # Get most common DM value
 common_dm=$(find_most_common $dm)
-echo "Most common DM value: $common_dm"
+echo "common_dm=${common_dm} # Most common DM value"
 
 # Function to check array against the most common value and log mismatches
 check_array() {
