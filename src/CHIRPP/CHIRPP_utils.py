@@ -79,7 +79,7 @@ def edit_lines(fname, param_dict):
         fnew.write(f"{newline}\n")
     fnew.close()
     # Replace file with edited version
-    a = subprocess.run(f"mv {fname_new} {fname}", shell=True)
+    subprocess.run(f"mv {fname_new} {fname}", shell=True)
 
 
 def get_nbin_dm(outfile_paramcheck):
@@ -285,7 +285,7 @@ def make_tim(tjob_tim, email, pulsar, ntry):
         tim_new.write(newline)
     tim_new.close()
     # Replace file with edited version
-    a = subprocess.run(f"mv {timfile_new} {timfile}", shell=True)
+    subprocess.run(f"mv {timfile_new} {timfile}", shell=True)
 
     return (
         timfile,
@@ -391,3 +391,12 @@ def get_nchan(scrunch_factor, min_nchan=4, nchan_initial=1024):
         )
         exit(1)
     return nchan_initial // scrunch_factor
+
+def parse_email(email_arg):
+    if email_arg and ("@" not in email_arg or "." not in email_arg):
+        print(f"error: not a valid email: {email_arg}")
+    elif email_arg:
+        email = f"--mail-user={email_arg} --mail-type=END,FAIL"
+    else:
+        email = ""
+    return email

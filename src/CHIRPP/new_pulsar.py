@@ -163,12 +163,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-if args.email and ("@" not in args.email or "." not in args.email):
-    print(f"error: not a valid email: {args.email}")
-elif args.email:
-    email = f"--mail-user={args.email} --mail-type=END,FAIL"
-else:
-    email = ""
+email = parse_email(args.email)
 
 try:
     skipnum = np.where(args.skip == pipeline_steps)[0][0]
