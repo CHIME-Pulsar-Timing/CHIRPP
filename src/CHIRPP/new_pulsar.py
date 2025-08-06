@@ -171,6 +171,8 @@ if args.skip:
     except IndexError:
         print(f"error: use a valid pipeline step with --skip, one of: {pipeline_steps}")
         exit(1)
+else:
+    skipnum = -1
 
 pathcheck(args.data_directory)
 
@@ -232,7 +234,7 @@ if skipnum == -1:
     else:
         pathcheck(args.scripts_dir)
     exp_scripts = "Copy all scripts into the working directory."
-    cmd_scripts = f"cp {args.scripts_dir}/src/CHIRPP/bash/*sh {args.scripts_dir}/*.py ."
+    cmd_scripts = f"cp {args.scripts_dir}/src/CHIRPP/bash/*sh {args.scripts_dir}/src/CHIRPP/*.py ."
 
     exp_exec = "Give scripts execution permissions."
     cmd_exec = "chmod +x *.sh"
