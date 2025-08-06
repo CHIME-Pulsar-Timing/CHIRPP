@@ -93,6 +93,12 @@ pathcheck(args.data_directory)
 
 today = datetime.today().strftime('%Y-%m-%d')
 
+### To-do: copy bash scripts (+chime_zap.psh) or do rework
+
+### To-do: find new data on Cedar
+
+### To-do: store/locate sorted_paramList.txt from initial run
+
 exp_paramcheck = [
         "Cut short subints, standardize nbin, freq, bw, nchan, npol",
         "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"+f".{today}.log",
@@ -107,6 +113,9 @@ cmd_paramcheck = sbatch_cmd(
     jobname=jobname_paramcheck,
     outfile=outfile_paramcheck,
     tjob=args.tjob_paramcheck,
+)
+outfile_paramcheck = my_cmd(
+    cmd_paramcheck, exp_paramcheck, checkcomplete=outfile_paramcheck
 )
 
 processingjob_base = sbatch_cmd(None, email, mem="126G")
