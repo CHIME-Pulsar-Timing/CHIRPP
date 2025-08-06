@@ -165,11 +165,12 @@ args = parser.parse_args()
 
 email = parse_email(args.email)
 
-try:
-    skipnum = np.where(args.skip == pipeline_steps)[0][0]
-except IndexError:
-    print(f"error: use a valid pipeline step with --skip, one of: {pipeline_steps}")
-    exit(1)
+if args.skip:
+    try:
+        skipnum = np.where(args.skip == pipeline_steps)[0][0]
+    except IndexError:
+        print(f"error: use a valid pipeline step with --skip, one of: {pipeline_steps}")
+        exit(1)
 
 pathcheck(args.data_directory)
 
