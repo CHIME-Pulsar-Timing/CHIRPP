@@ -99,6 +99,10 @@ today = datetime.today().strftime('%Y-%m-%d')
 
 ### To-do: store/locate sorted_paramList.txt from initial run
 
+### To-do: store/locate config.sh from initial run
+
+### To-do: store/locate template from initial run
+
 exp_paramcheck = [
         "Cut short subints, standardize nbin, freq, bw, nchan, npol",
         "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"+f".{today}.log",
@@ -169,7 +173,7 @@ check_num_files(
 )
 
 outfile_scrunch = processing_scrunch(
-    processingjob_base, args.tjob_scrunch, args.pulsar
+    processingjob_base, args.tjob_scrunch, args.pulsar, newdata=True
 )
 check_num_files(
     ".bmwt.clfd", ".ftp", logfile=outfile_scrunch, force_proceed=args.force_proceed

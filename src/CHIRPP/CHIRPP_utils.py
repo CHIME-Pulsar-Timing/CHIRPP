@@ -143,13 +143,16 @@ def check_num_files(ext_1, ext_2, logfile=None, force_proceed=False):
             exit(1)
 
 
-def processing_scrunch(paralleljob_base, tjob_scrunch, pulsar):
+def processing_scrunch(base_jobname, tjob_scrunch, pulsar, newdata=False):
     exp_scrunch = [
         "Scrunch in frequency, time, and polarization.",
         "Adjust tjob with --tjob_scrunch",
     ]
     outfile_scrunch = f"scrunch_{pulsar}.out"
-    cmd_scrunch = f"{paralleljob_base}--time={tjob_scrunch} -o {outfile_scrunch} parallel_scrunch.sh"
+    if newdata:
+        cmd_scrunch = f"{base_jobname}--time={tjob_scrunch} -o {outfile_scrunch} scrunch.sh"
+    else:
+        cmd_scrunch = f"{base_jobname}--time={tjob_scrunch} -o {outfile_scrunch} parallel_scrunch.sh"
     outfile_scrunch = my_cmd(cmd_scrunch, exp_scrunch, checkcomplete=outfile_scrunch)
     return outfile_scrunch
 
