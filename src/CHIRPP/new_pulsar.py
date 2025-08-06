@@ -379,7 +379,7 @@ if skipnum < 1:
         jobname=jobname_paramcheck,
         outfile=outfile_paramcheck,
         tjob=args.tjob_paramcheck,
-        misc=f"-c {args.paramcheck_cpus}",
+        misc=f"-c {args.max_cpus}",
     )
     my_cmd(cmd_datecheck, exp_datecheck)
     if args.subint_threshold:
