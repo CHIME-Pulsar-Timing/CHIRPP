@@ -10,6 +10,15 @@ from CHIRPP_utils import *
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")
 
+pipeline_steps = [
+    "ephemNconvert",
+    "clean5G",
+    "clean",
+    "beamWeight",
+    "scrunch",
+    "tim",
+]
+
 parser = argparse.ArgumentParser(
     description="Generate template profile and times of arrival for new pulsar dataset."
 )
@@ -26,9 +35,16 @@ parser.add_argument(
     type=str,
     help="Path to this pulsar's tim file."
 )
-# parser.add_argument(
-#     "--skip", choices=pipeline_steps, type=str, help="Skip to the specified step."
-# )
+parser.add_argument(
+    "-d",
+    "--data_directory",
+    type=str,
+    default=current_dir,
+    help="Path to copy the archives to (or where they already live if using --skip; current directory by default).",
+)
+parser.add_argument(
+    "--skip", choices=pipeline_steps, type=str, help="Skip to the specified step."
+)
 parser.add_argument(
     "--tjob_paramcheck",
     type=str,
@@ -38,8 +54,8 @@ parser.add_argument(
 parser.add_argument(
     "--tjob_ephemNconvert",
     type=str,
-    default="12:00:00",
-    help="Time allotted to parallel_ephemNconvert.sh job, HH:MM:SS (12h by default).",
+    default="3:00:00",
+    help="Time allotted to parallel_ephemNconvert.sh job, HH:MM:SS (3h by default).",
 )
 parser.add_argument(
     "--tjob_clean5G",
@@ -77,13 +93,6 @@ parser.add_argument(
     default="3:00:00",
     help="Time allotted to tim_run.sh job, HH:MM:SS (3h by default).",
 )
-parser.add_argument(
-    "-d",
-    "--data_directory",
-    type=str,
-    default=current_dir,
-    help="Path to copy the archives to (or where they already live if using --skip; current directory by default).",
-)
 
 args = parser.parse_args()
 
@@ -103,81 +112,96 @@ today = datetime.today().strftime('%Y-%m-%d')
 
 ### To-do: store/locate template from initial run
 
-exp_paramcheck = [
-        "Cut short subints, standardize nbin, freq, bw, nchan, npol",
-        "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"+f".{today}.log",
-        "Adjust tjob with --tjob_paramcheck.",
+if args.skip:
+    try:
+        skipnum = np.where(args.skip == pipeline_steps)[0][0]
+    except IndexError:
+        print(f"error: use a valid pipeline step with --skip, one of: {pipeline_steps}")
+        exit(1)
+else:
+    skipnum = -1
+
+if skipnum == -1:
+    exp_paramcheck = [
+            "Cut short subints, standardize nbin, freq, bw, nchan, npol",
+            "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"+f".{today}.log",
+            "Adjust tjob with --tjob_paramcheck.",
+        ]
+    jobname_paramcheck = f"newParamCheck_{args.pulsar}_{today}"
+    outfile_paramcheck = f"{jobname_paramcheck}.out"
+    cmd_paramcheck = sbatch_cmd(
+        "newParamCheck.sh",
+        email,
+        mem="66G",
+        jobname=jobname_paramcheck,
+        outfile=outfile_paramcheck,
+        tjob=args.tjob_paramcheck,
+    )
+    outfile_paramcheck = my_cmd(
+        cmd_paramcheck, exp_paramcheck, checkcomplete=outfile_paramcheck
+    )
+
+processingjob_base = sbatch_cmd(None, email, mem="12G")
+
+if skipnum < 1:
+    exp_ephemNconvert = [
+        "Install ephemeris before averaging to ensure best data quality.",
+        "Adjust tjob with --tjob_ephemNconvert",
     ]
-jobname_paramcheck = f"newParamCheck_{args.pulsar}_{today}"
-outfile_paramcheck = f"{jobname_paramcheck}.out"
-cmd_paramcheck = sbatch_cmd(
-    "newParamCheck.sh",
-    email,
-    mem="66G",
-    jobname=jobname_paramcheck,
-    outfile=outfile_paramcheck,
-    tjob=args.tjob_paramcheck,
-)
-outfile_paramcheck = my_cmd(
-    cmd_paramcheck, exp_paramcheck, checkcomplete=outfile_paramcheck
-)
+    outfile_ephemNconvert = f"ephemNconvert_{args.pulsar}_{today}.out"
+    cmd_ephemNconvert = f"{processingjob_base}--time={args.tjob_ephemNconvert} -J ephemNconvert_{args.pulsar} -o {outfile_ephemNconvert} ephemNconvert.sh"
+    outfile_ephemNconvert = my_cmd(
+        cmd_ephemNconvert, exp_ephemNconvert, checkcomplete=outfile_ephemNconvert
+    )
 
-processingjob_base = sbatch_cmd(None, email, mem="126G")
+if skipnum < 2:
+    exp_clean5G = [
+        "Zap known bad channels.",
+        "Adjust tjob with --tjob_clean5G",
+    ]
+    outfile_clean5G = f"clean5G_{args.pulsar}_{today}.out"
+    cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -J clean5G_{args.pulsar} -o {outfile_clean5G} clean5G.sh"
+    outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
+    check_num_files(
+        ".ar", ".zap", logfile=outfile_clean5G, force_proceed=args.force_proceed
+    )
 
-exp_ephemNconvert = [
-    "Install ephemeris before averaging to ensure best data quality.",
-    "Adjust tjob with --tjob_ephemNconvert",
-]
-outfile_ephemNconvert = f"ephemNconvert_{args.pulsar}_{today}.out"
-cmd_ephemNconvert = f"{processingjob_base}--time={args.tjob_ephemNconvert} -J ephemNconvert_{args.pulsar} -o {outfile_ephemNconvert} ephemNconvert.sh"
-outfile_ephemNconvert = my_cmd(
-    cmd_ephemNconvert, exp_ephemNconvert, checkcomplete=outfile_ephemNconvert
-)
+if skipnum < 3:
+    exp_clean = [
+        "Run clfd.",
+        "Adjust tjob with --tjob_clean",
+    ]
+    outfile_clean = f"clean_{args.pulsar}_{today}.out"
+    cmd_clean = f"{processingjob_base}--time={args.tjob_clean} -J clean_{args.pulsar}  -o {outfile_clean} clean.sh"
+    outfile_clean = my_cmd(cmd_clean, exp_clean, checkcomplete=outfile_clean)
+    check_num_files(
+        ".zap", ".zap.clfd", logfile=outfile_clean, force_proceed=args.force_proceed
+    )
 
-exp_clean5G = [
-    "Zap known bad channels.",
-    "Adjust tjob with --tjob_clean5G",
-]
-outfile_clean5G = f"clean5G_{args.pulsar}_{today}.out"
-cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -J clean5G_{args.pulsar} -o {outfile_clean5G} clean5G.sh"
-outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
-check_num_files(
-    ".ar", ".zap", logfile=outfile_clean5G, force_proceed=args.force_proceed
-)
+if skipnum < 4:
+    exp_beamWeight = [
+        "Run beam weighting.",
+        "Adjust tjob with --tjob_beamweight",
+    ]
+    outfile_beamWeight = f"beamWeight_{args.pulsar}_{today}.out"
+    cmd_beamWeight = f"{processingjob_base}--time={args.tjob_beamweight} -J beamWeight_{args.pulsar} -o {outfile_beamWeight} beamWeight.sh"
+    outfile_beamWeight = my_cmd(
+        cmd_beamWeight, exp_beamWeight, checkcomplete=outfile_beamWeight
+    )
+    check_num_files(
+        ".zap.clfd",
+        ".bmwt.clfd",
+        logfile=outfile_beamWeight,
+        force_proceed=args.force_proceed,
+    )
 
-exp_clean = [
-    "Run clfd.",
-    "Adjust tjob with --tjob_clean",
-]
-outfile_clean = f"clean_{args.pulsar}_{today}.out"
-cmd_clean = f"{processingjob_base}--time={args.tjob_clean} -J clean_{args.pulsar}  -o {outfile_clean} clean.sh"
-outfile_clean = my_cmd(cmd_clean, exp_clean, checkcomplete=outfile_clean)
-check_num_files(
-    ".zap", ".zap.clfd", logfile=outfile_clean, force_proceed=args.force_proceed
-)
-
-exp_beamWeight = [
-    "Run beam weighting.",
-    "Adjust tjob with --tjob_beamweight",
-]
-outfile_beamWeight = f"beamWeight_{args.pulsar}_{today}.out"
-cmd_beamWeight = f"{processingjob_base}--time={args.tjob_beamweight} -J beamWeight_{args.pulsar} -o {outfile_beamWeight} beamWeight.sh"
-outfile_beamWeight = my_cmd(
-    cmd_beamWeight, exp_beamWeight, checkcomplete=outfile_beamWeight
-)
-check_num_files(
-    ".zap.clfd",
-    ".bmwt.clfd",
-    logfile=outfile_beamWeight,
-    force_proceed=args.force_proceed,
-)
-
-outfile_scrunch = processing_scrunch(
-    f"{processingjob_base} -J scrunch_{args.pulsar} ", args.tjob_scrunch, args.pulsar, newdata=True
-)
-check_num_files(
-    ".bmwt.clfd", ".ftp", logfile=outfile_scrunch, force_proceed=args.force_proceed
-)
+if skipnum < 5:
+    outfile_scrunch = processing_scrunch(
+        f"{processingjob_base} -J scrunch_{args.pulsar} ", args.tjob_scrunch, args.pulsar, newdata=True
+    )
+    check_num_files(
+        ".bmwt.clfd", ".ftp", logfile=outfile_scrunch, force_proceed=args.force_proceed
+    )
 
 exp_newtim = [
     "Create new .tim file using pat.",
