@@ -20,6 +20,6 @@ fi
 echo "Pulsar name found: $pulsar_name"
 
 # Zap known bad channels (5G zapping from Bradley plus list of commonly bad channels from Emmanuel)
-for f in \$(ls CHIME*.ar); do 
-    psrsh chime_zap.psh -e ar.zap \$f >> clean5G-\${SLURM_JOB_ID}.out 2>>clean5G-\${SLURM_JOB_ID}.err
+for f in $(ls CHIME*.ar); do 
+    psrsh chime_zap.psh -e ar.zap $f >> clean5G_${pulsar_name}-${SLURM_JOB_ID}.out 2>>clean5G_${pulsar_name}-${SLURM_JOB_ID}.err
 done

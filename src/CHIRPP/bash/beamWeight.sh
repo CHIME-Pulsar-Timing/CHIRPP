@@ -20,4 +20,4 @@ fi
 echo "Pulsar name found: $pulsar_name"
 
 # Run beam weighting on each file
-add_beam -vv -e bmwt CHIME*.clfd >>beamWeight_${pulsar_name}-\${SLURM_JOB_ID}.out 2>>beamWeight_${pulsar_name}-\${SLURM_JOB_ID}.err
+add_beam -vv -e bmwt CHIME*.clfd >>beamWeight_${pulsar_name}-${SLURM_JOB_ID}.out 2>>beamWeight_${pulsar_name}-${SLURM_JOB_ID}.err

@@ -20,6 +20,6 @@ fi
 echo "Pulsar name found: $pulsar_name"
 
 # Run clfd
-for f in \$(ls CHIME*.zap); do 
-    clfd \$f >> clean-\${SLURM_JOB_ID}.out 2>>clean-\${SLURM_JOB_ID}.err
+for f in $(ls CHIME*.zap); do 
+    clfd $f >> clean_${pulsar_name}-${SLURM_JOB_ID}.out 2>>clean_${pulsar_name}-${SLURM_JOB_ID}.err
 done

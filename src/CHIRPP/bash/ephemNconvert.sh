@@ -39,15 +39,15 @@ export TEMPO2_ALIAS='tempo'
 # And convert to a psrfits format for compatibility downstream
 # Also update header DMs, if desired
 if [ "$dm" = "ephemeris" ]; then
-    for f in \$(ls CHIME*.ar); do 
-        pam -p -E ${par_file} --update_dm -a PSRFITS -u . \$f >> ephemNconvert-\${SLURM_JOB_ID}.out 2>>ephemNconvert-\${SLURM_JOB_ID}.err
+    for f in $(ls CHIME*.ar); do 
+        pam -p -E ${par_file} --update_dm -a PSRFITS -u . $f >> ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.err
     done
 elif [ "$dm" = true ]; then
-    for f in \$(ls CHIME*.ar); do 
-        pam -p -E ${par_file} -d ${dm} -a PSRFITS -u . \$f >> ephemNconvert-\${SLURM_JOB_ID}.out 2>>ephemNconvert-\${SLURM_JOB_ID}.err
+    for f in $(ls CHIME*.ar); do 
+        pam -p -E ${par_file} -d ${dm} -a PSRFITS -u . $f >> ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.err
     done
 else
-    for f in \$(ls CHIME*.ar); do 
-        pam -p -E ${par_file} -a PSRFITS -u . \$f >> ephemNconvert-\${SLURM_JOB_ID}.out 2>>ephemNconvert-\${SLURM_JOB_ID}.err
+    for f in $(ls CHIME*.ar); do 
+        pam -p -E ${par_file} -a PSRFITS -u . $f >> ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.err
     done
 fi

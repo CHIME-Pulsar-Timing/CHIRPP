@@ -21,7 +21,7 @@ echo "Pulsar name found: $pulsar_name"
 
 # Scrunch files in time and frequency
 # Use nsubbands value from config.sh
-for f in \$(ls CHIME*bmwt.clfd); do 
-    nsub=\$(vap -nc length \$f | awk '{print int(\$2/$max_subint) + 1}')
-    pam --setnchn $nsubbands -e ftp --setnsub \$nsub \$f >> scrunch_${pulsar_name}-\${SLURM_JOB_ID}.out 2>>scrunch_${pulsar_name}-\${SLURM_JOB_ID}.err
+for f in $(ls CHIME*bmwt.clfd); do 
+    nsub=$(vap -nc length $f | awk '{print int(\$2/${max_subint}) + 1}')  # does this work???
+    pam --setnchn $nsubbands -e ftp --setnsub $nsub $f >> scrunch_${pulsar_name}-${SLURM_JOB_ID}.out 2>>scrunch_${pulsar_name}-${SLURM_JOB_ID}.err
 done
