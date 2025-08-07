@@ -10,14 +10,14 @@ from CHIRPP_utils import *
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")
 
-pipeline_steps = [
+pipeline_steps = np.array([
     "ephemNconvert",
     "clean5G",
     "clean",
     "beamWeight",
     "scrunch",
     "tim",
-]
+])
 
 parser = argparse.ArgumentParser(
     description="Generate template profile and times of arrival for new pulsar dataset."
