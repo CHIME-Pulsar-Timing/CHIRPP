@@ -129,7 +129,7 @@ exp_ephemNconvert = [
     "Adjust tjob with --tjob_ephemNconvert",
 ]
 outfile_ephemNconvert = f"ephemNconvert_{args.pulsar}_{today}.out"
-cmd_ephemNconvert = f"{processingjob_base}--time={args.tjob_ephemNconvert} -o {outfile_ephemNconvert} ephemNconvert.sh"
+cmd_ephemNconvert = f"{processingjob_base}--time={args.tjob_ephemNconvert} -J ephemNconvert_{args.pulsar} -o {outfile_ephemNconvert} ephemNconvert.sh"
 outfile_ephemNconvert = my_cmd(
     cmd_ephemNconvert, exp_ephemNconvert, checkcomplete=outfile_ephemNconvert
 )
@@ -139,7 +139,7 @@ exp_clean5G = [
     "Adjust tjob with --tjob_clean5G",
 ]
 outfile_clean5G = f"clean5G_{args.pulsar}_{today}.out"
-cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -o {outfile_clean5G} clean5G.sh"
+cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -J clean5G_{args.pulsar} -o {outfile_clean5G} clean5G.sh"
 outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
 check_num_files(
     ".ar", ".zap", logfile=outfile_clean5G, force_proceed=args.force_proceed
@@ -150,7 +150,7 @@ exp_clean = [
     "Adjust tjob with --tjob_clean",
 ]
 outfile_clean = f"clean_{args.pulsar}_{today}.out"
-cmd_clean = f"{processingjob_base}--time={args.tjob_clean} -o {outfile_clean} clean.sh"
+cmd_clean = f"{processingjob_base}--time={args.tjob_clean} -J clean_{args.pulsar}  -o {outfile_clean} clean.sh"
 outfile_clean = my_cmd(cmd_clean, exp_clean, checkcomplete=outfile_clean)
 check_num_files(
     ".zap", ".zap.clfd", logfile=outfile_clean, force_proceed=args.force_proceed
@@ -161,7 +161,7 @@ exp_beamWeight = [
     "Adjust tjob with --tjob_beamweight",
 ]
 outfile_beamWeight = f"beamWeight_{args.pulsar}_{today}.out"
-cmd_beamWeight = f"{processingjob_base}--time={args.tjob_beamweight} -o {outfile_beamWeight} beamWeight.sh"
+cmd_beamWeight = f"{processingjob_base}--time={args.tjob_beamweight} -J beamWeight_{args.pulsar} -o {outfile_beamWeight} beamWeight.sh"
 outfile_beamWeight = my_cmd(
     cmd_beamWeight, exp_beamWeight, checkcomplete=outfile_beamWeight
 )
@@ -173,7 +173,7 @@ check_num_files(
 )
 
 outfile_scrunch = processing_scrunch(
-    processingjob_base, args.tjob_scrunch, args.pulsar, newdata=True
+    f"{processingjob_base} -J scrunch_{args.pulsar} ", args.tjob_scrunch, args.pulsar, newdata=True
 )
 check_num_files(
     ".bmwt.clfd", ".ftp", logfile=outfile_scrunch, force_proceed=args.force_proceed

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#SBATCH --job-name=clean5G_${pulsar_name} # Job name
 #SBATCH --error=%x-%j.err                 # Error file name = jobname-jobID.out
 
 # Print job ID

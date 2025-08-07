@@ -326,6 +326,9 @@ for fail_dir in *Fail; do
         echo "Directory not found: $fail_dir"
     fi
 done
+
+### Bug here ??? It's trying to mv '{sorted_}paramList.txt' instead of '{sorted_}newparamList.txt' for some reason...
+
 mv sorted_$paramList common_failures/
 mv $paramList common_failures/
 mv sorted_paramList.txt common_failures/
