@@ -3,7 +3,7 @@
 #SBATCH --error=%x-%j.err                 # Error file name = jobname-jobID.err
 
 # Print job ID
-echo "Job ID: \$SLURM_JOB_ID"
+echo "Job ID: $SLURM_JOB_ID"
 
 source config.sh
 
