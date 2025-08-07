@@ -18,7 +18,7 @@ def my_cmd(cmd, message, checkcomplete=False, renamelog=True):
     if checkcomplete:
         # Check the .out file for JOB CANCELLED messages
         # and rename it including the job ID, if necessary
-        logfile = check_jobcomplete(checkcomplete, renamelog=True)
+        logfile = check_jobcomplete(checkcomplete, renamelog=renamelog)
         # Check the .err file for JOB CANCELLED messages
         _ = check_jobcomplete(f"{logfile[:-4]}.err")
         return logfile

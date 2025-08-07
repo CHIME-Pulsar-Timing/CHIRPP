@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#SBATCH --output=%x-%j.out                 # Output file name = jobname-jobID.out
 #SBATCH --error=%x-%j.err                 # Error file name = jobname-jobID.err
 
 # Print job ID
