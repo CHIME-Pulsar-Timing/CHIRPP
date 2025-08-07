@@ -3,8 +3,8 @@
 import argparse
 import subprocess
 import os
+import numpy as np
 from datetime import datetime
-from glob import glob
 from CHIRPP_utils import *
 
 
