@@ -10,14 +10,16 @@ from CHIRPP_utils import *
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")
 
-pipeline_steps = np.array([
-    "ephemNconvert",
-    "clean5G",
-    "clean",
-    "beamWeight",
-    "scrunch",
-    "tim",
-])
+pipeline_steps = np.array(
+    [
+        "ephemNconvert",
+        "clean5G",
+        "clean",
+        "beamWeight",
+        "scrunch",
+        "tim",
+    ]
+)
 
 parser = argparse.ArgumentParser(
     description="Generate template profile and times of arrival for new pulsar dataset."
@@ -29,12 +31,7 @@ parser.add_argument(
     type=str,
     help="Email to be alerted when jobs complete or fail.",
 )
-parser.add_argument(
-    "-t",
-    "--tim",
-    type=str,
-    help="Path to this pulsar's tim file."
-)
+parser.add_argument("-t", "--tim", type=str, help="Path to this pulsar's tim file.")
 parser.add_argument(
     "-d",
     "--data_directory",
@@ -100,7 +97,7 @@ email = parse_email(args.email)
 
 pathcheck(args.data_directory)
 
-today = datetime.today().strftime('%Y-%m-%d')
+today = datetime.today().strftime("%Y-%m-%d")
 
 ### To-do: copy bash scripts (+chime_zap.psh) or do rework
 
@@ -123,10 +120,11 @@ else:
 
 if skipnum == -1:
     exp_paramcheck = [
-            "Cut short subints, standardize nbin, freq, bw, nchan, npol",
-            "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"+f".{today}.log",
-            "Adjust tjob with --tjob_paramcheck.",
-        ]
+        "Cut short subints, standardize nbin, freq, bw, nchan, npol",
+        "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"
+        + f".{today}.log",
+        "Adjust tjob with --tjob_paramcheck.",
+    ]
     jobname_paramcheck = f"newParamCheck_{args.pulsar}_{today}"
     outfile_paramcheck = f"{jobname_paramcheck}.out"
     cmd_paramcheck = sbatch_cmd(
@@ -162,9 +160,7 @@ if skipnum < 2:
     outfile_clean5G = f"clean5G_{args.pulsar}.out"
     cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -J clean5G_{args.pulsar} -o {outfile_clean5G} clean5G.sh"
     outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
-    check_num_files(
-        ".ar", ".zap", logfile=outfile_clean5G, force_proceed=args.force_proceed
-    )
+    check_num_files(".ar", ".zap", logfile=outfile_clean5G)
 
 if skipnum < 3:
     exp_clean = [
@@ -174,9 +170,7 @@ if skipnum < 3:
     outfile_clean = f"clean_{args.pulsar}.out"
     cmd_clean = f"{processingjob_base}--time={args.tjob_clean} -J clean_{args.pulsar}  -o {outfile_clean} clean.sh"
     outfile_clean = my_cmd(cmd_clean, exp_clean, checkcomplete=outfile_clean)
-    check_num_files(
-        ".zap", ".zap.clfd", logfile=outfile_clean, force_proceed=args.force_proceed
-    )
+    check_num_files(".zap", ".zap.clfd", logfile=outfile_clean)
 
 if skipnum < 4:
     exp_beamWeight = [
@@ -192,16 +186,16 @@ if skipnum < 4:
         ".zap.clfd",
         ".bmwt.clfd",
         logfile=outfile_beamWeight,
-        force_proceed=args.force_proceed,
     )
 
 if skipnum < 5:
     outfile_scrunch = processing_scrunch(
-        f"{processingjob_base} -J scrunch_{args.pulsar} ", args.tjob_scrunch, args.pulsar, newdata=True
+        f"{processingjob_base} -J scrunch_{args.pulsar} ",
+        args.tjob_scrunch,
+        args.pulsar,
+        newdata=True,
     )
-    check_num_files(
-        ".bmwt.clfd", ".ftp", logfile=outfile_scrunch, force_proceed=args.force_proceed
-    )
+    check_num_files(".bmwt.clfd", ".ftp", logfile=outfile_scrunch)
 
 exp_timcreation = [
     "TOA generation using new data",
@@ -235,8 +229,7 @@ tfr = newtim.read()
 newtim.close()
 lines = tfr.split("\n")
 newlines = [
-    f"chime{x.lstrip('CHIME')}\n" if x.startswith("CHIME") else ""
-    for x in lines
+    f"chime{x.lstrip('CHIME')}\n" if x.startswith("CHIME") else "" for x in lines
 ]
 tim_new = open(args.tim, "a")
 for newline in newlines:
