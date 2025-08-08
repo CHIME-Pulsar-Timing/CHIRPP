@@ -205,7 +205,7 @@ cmd_timcreation = "./tim_creation.sh"
 my_cmd(cmd_timcreation, exp_timcreation)
 
 exp_newtim = "Creating our new tim file using pat."
-outfile_newtim = f"new_tim_{args.pulsar}.out"
+outfile_newtim = f"tim_run_{args.pulsar}.out"
 cmd_newtim = sbatch_cmd(
     "tim_run.sh",
     email,
