@@ -32,6 +32,9 @@ parser.add_argument(
     help="Email to be alerted when jobs complete or fail.",
 )
 parser.add_argument("-t", "--tim", type=str, help="Path to this pulsar's tim file.")
+parser.add_argument("-c", "--config", type=str, help="Path to the 'config.sh' file from this pulsar's `new_pulsar.py` run.")
+parser.add_argument("-p", "--template", type=str, help="Path to this pulsar's standard template.")
+parser.add_argument("-l", "--paramlist", type=str, help="Path to the 'sorted_paramList.txt' file from this pulsar's `new_pulsar.py` run.")
 parser.add_argument(
     "-d",
     "--data_directory",
@@ -101,13 +104,14 @@ today = datetime.today().strftime("%Y-%m-%d")
 
 ### To-do: copy bash scripts (+chime_zap.psh) or do rework
 
-### To-do: find new data on Cedar
+### To-do: find new data on Fir
 
-### To-do: store/locate sorted_paramList.txt from initial run
+### To-do: store/locate sorted_paramList.txt, config.sh, template from initial run
+#########  currently command-line arguments, good enough?
 
-### To-do: store/locate config.sh from initial run
+### To-do: update 'global' sorted_paramList.txt with new observation parameters
 
-### To-do: store/locate template from initial run
+### To-do: stop script if zero files exist after newParamCheck.sh runs
 
 if args.skip:
     try:
@@ -119,6 +123,9 @@ else:
     skipnum = -1
 
 if skipnum == -1:
+    my_cmd(f"cp {args.config} .", "")
+    my_cmd(f"cp {args.template} .", "")
+    my_cmd(f"cp {args.paramlist} .", "")
     exp_paramcheck = [
         "Cut short subints, standardize nbin, freq, bw, nchan, npol",
         "Files that fail checks logged in ${PARAMETER}Fail/${PARAMETER}Fail"
@@ -231,7 +238,10 @@ lines = tfr.split("\n")
 newlines = [
     f"chime{x.lstrip('CHIME')}\n" if x.startswith("CHIME") else "" for x in lines
 ]
-tim_new = open(args.tim, "a")
+my_cmd(f"mv {newtimfile} {newtimfile.rstrip('nb.tim')}.new_toas.nb.tim", "")
+my_cmd(f"cp {args.tim} {newtimfile}", "")
+
+newtim = open(newtimfile, "a")
 for newline in newlines:
-    tim_new.write(newline)
-tim_new.close()
+    newtim.write(newline)
+newtim.close()
