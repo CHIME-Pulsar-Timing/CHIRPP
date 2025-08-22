@@ -7,6 +7,7 @@ import numpy as np
 import astropy.units as u
 from glob import glob
 from CHIRPP_utils import *
+from write_scripts import *
 
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")
@@ -29,12 +30,6 @@ parser = argparse.ArgumentParser(
     description="Generate template profile and times of arrival for new pulsar dataset."
 )
 parser.add_argument("pulsar", type=str, help="Pulsar name, e.g. J0437-4715")
-parser.add_argument(
-    "-s",
-    "--scripts_dir",
-    type=str,
-    help="Path to CHIRPP repository (e.g. '~/CHIRPP'; required if starting at the beginning)",
-)
 parser.add_argument(
     "-e",
     "--email",
@@ -161,6 +156,12 @@ parser.add_argument(
     action="store_true",
     help="Automatically proceed through any prompts for manual input.",
 )
+parser.add_argument(
+    "-o",
+    "--force_overwrite",
+    action="store_true",
+    help="Automatically overwrite pre-existing bash scripts (warning: this includes config.sh if you are starting from the beginning!).",
+)
 args = parser.parse_args()
 
 email = parse_email(args.email)
@@ -226,26 +227,13 @@ print(f'Using "{par_dir}" as par_directory.')
 print(f"Found .par file in par_directory: {parfile.split('/')[-1]}\n")
 
 if skipnum == -1:
-    if not args.scripts_dir:
-        print(
-            "error: you need to provide the path to the CHIRPP repository (e.g. '~/CHIRPP') with `-s` or `--scripts_dir` when starting at the beginning!\n"
-        )
-        exit(1)
-    else:
-        pathcheck(args.scripts_dir)
-    exp_scripts = "Copy all scripts into the working directory."
-    cmd_scripts = f"cp {args.scripts_dir}/src/CHIRPP/bash/*sh {args.scripts_dir}/src/CHIRPP/*.py ."
-
-    exp_exec = "Give scripts execution permissions."
-    cmd_exec = "chmod +x *.sh"
+    write_config(force_overwrite=args.force_overwrite)
 
     exp_newdata = "Grab the most recent data."
     foldmode_dir = f"{HOME}/projects/rrg-istairs-ad/archive/pulsar/fold_mode"
     pathcheck(foldmode_dir)
     cmd_newdata = f"ln -s {foldmode_dir}/*{args.pulsar}*.ar {args.data_directory}"
 
-    my_cmd(cmd_scripts, exp_scripts)
-    my_cmd(cmd_exec, exp_exec)
     my_cmd(cmd_newdata, exp_newdata)
 
     exp_olddata = "Grab the older data, this will take a minute."
@@ -266,6 +254,8 @@ if skipnum == -1:
         outfile=outfile_unpack,
         tjob=args.tjob_unpack,
     )
+
+    write_unpack_tar(force_overwrite=args.force_overwrite)
     outfile_unpack = my_cmd(cmd_unpack, exp_unpack, checkcomplete=outfile_unpack)
 
     # Check that all tar's were unpacked
@@ -381,7 +371,11 @@ if skipnum < 1:
         tjob=args.tjob_paramcheck,
         misc=f"-c {args.max_cpus}",
     )
+
+    write_dateCheck(force_overwrite=args.force_overwrite)
     my_cmd(cmd_datecheck, exp_datecheck)
+
+    write_allParamCheck(force_overwrite=args.force_overwrite)
     if args.subint_threshold:
         print("\nEditing allParamCheck.sh with given threshold value\n")
         threshold_dict = dict([("threshold", args.subint_threshold)])
@@ -485,6 +479,8 @@ if skipnum < 7:
         "Make the files that list the commands to run with GNU parallel."
     )
     cmd_processing_creation = "./processing_creation.sh"
+
+    write_processing_creation(force_overwrite=args.force_overwrite)
     my_cmd(cmd_processing_creation, exp_processing_creation)
 
 paralleljob_base = sbatch_cmd(None, email, mem="126G")
@@ -496,6 +492,7 @@ if skipnum < 3:
     ]
     outfile_ephemNconvert = f"ephemNconvert_{args.pulsar}.out"
     cmd_ephemNconvert = f"{paralleljob_base}--time={args.tjob_ephemNconvert} -o {outfile_ephemNconvert} parallel_ephemNconvert.sh"
+
     outfile_ephemNconvert = my_cmd(
         cmd_ephemNconvert, exp_ephemNconvert, checkcomplete=outfile_ephemNconvert
     )
@@ -507,6 +504,8 @@ if skipnum < 4:
     ]
     outfile_clean5G = f"clean5G_{args.pulsar}.out"
     cmd_clean5G = f"{paralleljob_base}--time={args.tjob_clean5G} -o {outfile_clean5G} parallel_clean5G.sh"
+
+    write_chimezap(force_overwrite=args.force_overwrite)
     outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
     check_num_files(
         ".ar", ".zap", logfile=outfile_clean5G, force_proceed=args.force_proceed
@@ -519,6 +518,7 @@ if skipnum < 5:
     ]
     outfile_clean = f"clean_{args.pulsar}.out"
     cmd_clean = f"{paralleljob_base}--time={args.tjob_clean} -o {outfile_clean} parallel_clean.sh"
+
     outfile_clean = my_cmd(cmd_clean, exp_clean, checkcomplete=outfile_clean)
     check_num_files(
         ".zap", ".zap.clfd", logfile=outfile_clean, force_proceed=args.force_proceed
@@ -531,6 +531,7 @@ if skipnum < 6:
     ]
     outfile_beamWeight = f"beamWeight_{args.pulsar}.out"
     cmd_beamWeight = f"{paralleljob_base}--time={args.tjob_beamweight} -o {outfile_beamWeight} parallel_beamWeight.sh"
+
     outfile_beamWeight = my_cmd(
         cmd_beamWeight, exp_beamWeight, checkcomplete=outfile_beamWeight
     )
@@ -575,7 +576,11 @@ if skipnum < 7:
 
 if skipnum < 8:
     outfile_templaterun, templatefile = make_template(
-        args.tjob_template, email, args.pulsar
+        args.tjob_template,
+        email,
+        args.pulsar,
+        force_proceed=args.force_proceed,
+        force_overwrite=args.force_overwrite,
     )
 else:
     # Get the template filename from config.sh if skipping template creation
@@ -601,7 +606,13 @@ else:
 if skipnum < 9:
     ntry = 1
     timfile, outfile_timrun, tim_nchan, snr_25pct, snr_mean, scrunch_factor, ntoas = (
-        make_tim(args.tjob_tim, email, args.pulsar, ntry)
+        make_tim(
+            args.tjob_tim,
+            email,
+            args.pulsar,
+            ntry,
+            force_overwrite=args.force_overwrite,
+        )
     )
     # Check if our S/N cut requires we scrunch further in frequency
     new_nchan = get_nchan(
@@ -656,7 +667,13 @@ if skipnum < 9:
             snr_mean,
             scrunch_factor,
             ntoas,
-        ) = make_tim(args.tjob_tim, email, args.pulsar, ntry)
+        ) = make_tim(
+            args.tjob_tim,
+            email,
+            args.pulsar,
+            ntry,
+            force_overwrite=args.force_overwrite,
+        )
     print(f"\n25th-percentile S/N: {snr_25pct:.2f}")
     print(f"Mean S/N: {snr_mean:.2f}")
     print(

@@ -6,7 +6,7 @@ import os
 import numpy as np
 from datetime import datetime
 from CHIRPP_utils import *
-
+from write_scripts import *
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")
 
@@ -32,9 +32,21 @@ parser.add_argument(
     help="Email to be alerted when jobs complete or fail.",
 )
 parser.add_argument("-t", "--tim", type=str, help="Path to this pulsar's tim file.")
-parser.add_argument("-c", "--config", type=str, help="Path to the 'config.sh' file from this pulsar's `new_pulsar.py` run.")
-parser.add_argument("-p", "--template", type=str, help="Path to this pulsar's standard template.")
-parser.add_argument("-l", "--paramlist", type=str, help="Path to the 'sorted_paramList.txt' file from this pulsar's `new_pulsar.py` run.")
+parser.add_argument(
+    "-c",
+    "--config",
+    type=str,
+    help="Path to the 'config.sh' file from this pulsar's `new_pulsar.py` run.",
+)
+parser.add_argument(
+    "-p", "--template", type=str, help="Path to this pulsar's standard template."
+)
+parser.add_argument(
+    "-l",
+    "--paramlist",
+    type=str,
+    help="Path to the 'sorted_paramList.txt' file from this pulsar's `new_pulsar.py` run.",
+)
 parser.add_argument(
     "-d",
     "--data_directory",
@@ -93,6 +105,12 @@ parser.add_argument(
     default="3:00:00",
     help="Time allotted to tim_run.sh job, HH:MM:SS (3h by default).",
 )
+parser.add_argument(
+    "-o",
+    "--force_overwrite",
+    action="store_true",
+    help="Automatically overwrite pre-existing bash scripts (warning: this includes config.sh if you are starting from the beginning!).",
+)
 
 args = parser.parse_args()
 
@@ -142,6 +160,8 @@ if skipnum == -1:
         outfile=outfile_paramcheck,
         tjob=args.tjob_paramcheck,
     )
+
+    write_newParamCheck(force_overwrite=args.force_overwrite)
     outfile_paramcheck = my_cmd(
         cmd_paramcheck, exp_paramcheck, checkcomplete=outfile_paramcheck
     )
@@ -155,6 +175,8 @@ if skipnum < 1:
     ]
     outfile_ephemNconvert = f"ephemNconvert_{args.pulsar}.out"
     cmd_ephemNconvert = f"{processingjob_base}--time={args.tjob_ephemNconvert} -J ephemNconvert_{args.pulsar} -o {outfile_ephemNconvert} ephemNconvert.sh"
+
+    write_ephemNconvert(force_overwrite=args.force_overwrite)
     outfile_ephemNconvert = my_cmd(
         cmd_ephemNconvert, exp_ephemNconvert, checkcomplete=outfile_ephemNconvert
     )
@@ -166,6 +188,8 @@ if skipnum < 2:
     ]
     outfile_clean5G = f"clean5G_{args.pulsar}.out"
     cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -J clean5G_{args.pulsar} -o {outfile_clean5G} clean5G.sh"
+
+    write_clean5G(force_overwrite=args.force_overwrite)
     outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
     check_num_files(".ar", ".zap", logfile=outfile_clean5G)
 
@@ -176,6 +200,8 @@ if skipnum < 3:
     ]
     outfile_clean = f"clean_{args.pulsar}.out"
     cmd_clean = f"{processingjob_base}--time={args.tjob_clean} -J clean_{args.pulsar}  -o {outfile_clean} clean.sh"
+
+    write_clean(force_overwrite=args.force_overwrite)
     outfile_clean = my_cmd(cmd_clean, exp_clean, checkcomplete=outfile_clean)
     check_num_files(".zap", ".zap.clfd", logfile=outfile_clean)
 
@@ -186,6 +212,8 @@ if skipnum < 4:
     ]
     outfile_beamWeight = f"beamWeight_{args.pulsar}.out"
     cmd_beamWeight = f"{processingjob_base}--time={args.tjob_beamweight} -J beamWeight_{args.pulsar} -o {outfile_beamWeight} beamWeight.sh"
+
+    write_beamWeight(force_overwrite=args.force_overwrite)
     outfile_beamWeight = my_cmd(
         cmd_beamWeight, exp_beamWeight, checkcomplete=outfile_beamWeight
     )
@@ -196,6 +224,7 @@ if skipnum < 4:
     )
 
 if skipnum < 5:
+    write_scrunch(force_overwrite=args.force_overwrite)
     outfile_scrunch = processing_scrunch(
         f"{processingjob_base} -J scrunch_{args.pulsar} ",
         args.tjob_scrunch,
@@ -209,6 +238,8 @@ exp_timcreation = [
     "Adjust tjob with --tjob_tim",
 ]
 cmd_timcreation = "./tim_creation.sh"
+
+write_tim_creation(force_overwrite=args.force_overwrite)
 my_cmd(cmd_timcreation, exp_timcreation)
 
 exp_newtim = "Creating our new tim file using pat."
