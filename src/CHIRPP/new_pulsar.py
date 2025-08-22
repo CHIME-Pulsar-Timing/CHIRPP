@@ -7,7 +7,6 @@ import numpy as np
 import astropy.units as u
 from glob import glob
 from CHIRPP_utils import *
-from write_scripts import *
 
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from CHIRPP_utils import my_cmd
 import os.path
+import subprocess
 
 
 def write_script(fname, lines, force_overwrite=False):
@@ -15,7 +15,10 @@ def write_script(fname, lines, force_overwrite=False):
                     script.write(f"{line}\n")
                 script.write(f" \n")
                 script.close()
-                my_cmd(f"chmod +x {fname}", f"Make {fname} an executable.")
+                print(f"Make {fname} an executable.\n")
+                cmd_chmod = f"chmod +x {fname}"
+                print(f"> {cmd_chmod}")
+                subprocess.run(cmd_chmod, shell=True)
                 return
             elif user_input == "n" or user_input == "N":
                 while True:

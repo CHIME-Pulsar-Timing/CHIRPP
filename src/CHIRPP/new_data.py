@@ -6,7 +6,7 @@ import os
 import numpy as np
 from datetime import datetime
 from CHIRPP_utils import *
-from write_scripts import *
+
 
 current_dir = subprocess.check_output("pwd", shell=True, text=True).strip("\n")
 
