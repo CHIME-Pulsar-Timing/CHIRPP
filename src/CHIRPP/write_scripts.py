@@ -6,27 +6,32 @@ import subprocess
 
 def write_script(fname, lines, force_overwrite=False):
     print(f"Writing {fname}.\n")
-    if os.path.isfile(fname) and not force_overwrite:
-        while True:
-            user_input = input(f"{fname} already exists! Overwrite? [y/n]")
-            if user_input == "y" or user_input == "Y":
-                script = open(fname, "w")
-                for line in lines:
-                    script.write(f"{line}\n")
-                script.write(f" \n")
-                script.close()
-                print(f"Make {fname} an executable.\n")
-                cmd_chmod = f"chmod +x {fname}"
-                print(f"> {cmd_chmod}")
-                subprocess.run(cmd_chmod, shell=True)
-                return
-            elif user_input == "n" or user_input == "N":
-                while True:
-                    user_input = input(f"Continue with {fname} as is? [y/n]")
-                    if user_input == "y" or user_input == "Y":
-                        return
-                    elif user_input == "n" or user_input == "N":
-                        exit(0)
+    if os.path.isfile(fname):
+        cmd_overwrite = f"rm {fname}"
+        if not force_overwrite:
+            write = False
+            while not write:
+                user_input = input(f"{fname} already exists! Overwrite? [y/n]")
+                if user_input == "y" or user_input == "Y":
+                    write = True
+                elif user_input == "n" or user_input == "N":
+                    while True:
+                        user_input = input(f"Continue with {fname} as is? [y/n]")
+                        if user_input == "y" or user_input == "Y":
+                            return
+                        elif user_input == "n" or user_input == "N":
+                            exit(0)
+        print(f"> {cmd_overwrite}\n")
+        subprocess.run(cmd_overwrite, shell=True)
+    script = open(fname, "x")
+    for line in lines:
+        script.write(f"{line}\n")
+    script.write(f" \n")
+    script.close()
+    print(f"Make {fname} an executable.")
+    cmd_chmod = f"chmod +x {fname}"
+    print(f"> {cmd_chmod}\n")
+    subprocess.run(cmd_chmod, shell=True)
 
 
 def write_allParamCheck(force_overwrite=False):
@@ -123,8 +128,8 @@ def write_allParamCheck(force_overwrite=False):
         "    # Calculate length % 10 sec",
         "    # If there is a remainder, one of the subints is non-uniform",
         "    # The first/last subints will be shorter due to backend start-up/shutdown",
-        '    mod=$(python -c "printf {0} {1}")'.format(
-            "'{float($length) %", "float($nsub_duration):.4f}'"
+        '    mod=$(python -c "print(f{0}{1})")'.format(
+            "'{float($length) %", " float($nsub_duration):.4f}'"
         ),
         "",
         "    # Check if mod > threshold",
@@ -132,7 +137,7 @@ def write_allParamCheck(force_overwrite=False):
         '        echo "File: $file meets the condition (length=$length % 10 sec = $mod > $threshold), removing first and last subintegration."',
         "",
         "        # Remove first and last subintegration",
-        '        echo "delete subint 0"',
+        '        echo "delete subint 0',
         'delete subint $endsub" > rmsubints_${file}.psrsh',
         "",
         '        psrsh rmsubints_${file}.psrsh -m "$file"',
@@ -816,7 +821,7 @@ def write_newParamCheck(force_overwrite=False):
         "    # Calculate length % 10 sec",
         "    # If there is a remainder, one of the subints is non-uniform",
         "    # The first/last subints will be shorter due to backend start-up/shutdown",
-        '    mod=$(python -c "printf({0}{1})")'.format(
+        '    mod=$(python -c "print(f{0}{1})")'.format(
             "'{float($length) %", " float($nsub_duration):.4f}'"
         ),
         "",
@@ -825,8 +830,8 @@ def write_newParamCheck(force_overwrite=False):
         '        echo "File: $file meets the condition (length=$length % 10 sec = $mod > $threshold), removing first and last subintegration."',
         "",
         "        # Remove first and last subintegration",
-        '        echo "delete subint 0"',
-        'delete subint "$endsub" > rmsubints_${file}.psrsh',
+        '        echo "delete subint 0',
+        'delete subint $endsub" > rmsubints_${file}.psrsh',
         "",
         '        psrsh rmsubints_${file}.psrsh -m "$file"',
         "",

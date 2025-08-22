@@ -161,6 +161,11 @@ parser.add_argument(
     action="store_true",
     help="Automatically overwrite pre-existing bash scripts (warning: this includes config.sh if you are starting from the beginning!).",
 )
+parser.add_argument(
+    "--rmtar",
+    action="store_true",
+    help="Remove .tar files containing old data after they are unpacked, via `rm *.tar`.",
+)
 args = parser.parse_args()
 
 email = parse_email(args.email)
@@ -285,6 +290,11 @@ if skipnum == -1:
             _ = input(
                 "Or, you can ctrl-C to investigate, then resume by running again with the `--skip checks` option.\n"
             )
+    if args.rmtar:
+        exp_rmtar = "Remove .tar files containing old data."
+        cmd_rmtar = "rm *.tar"
+        
+        my_cmd(cmd_rmtar, exp_rmtar)
 
 ## Get orbital period, if any, from par file. Needed later to determine T-scrunching factor ##
 pf = open(parfile, "r")
