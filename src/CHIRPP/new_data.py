@@ -126,6 +126,8 @@ today = datetime.today().strftime("%Y-%m-%d")
 
 ### To-do: store/locate sorted_paramList.txt, config.sh, template from initial run
 #########  currently command-line arguments, good enough?
+### To-do: check if these files exist
+### To-do: ensure they work with --skip flag
 
 ### To-do: update 'global' sorted_paramList.txt with new observation parameters
 
@@ -190,6 +192,7 @@ if skipnum < 2:
     cmd_clean5G = f"{processingjob_base}--time={args.tjob_clean5G} -J clean5G_{args.pulsar} -o {outfile_clean5G} clean5G.sh"
 
     write_clean5G(force_overwrite=args.force_overwrite)
+    write_chimezap(force_overwrite=args.force_overwrite)
     outfile_clean5G = my_cmd(cmd_clean5G, exp_clean5G, checkcomplete=outfile_clean5G)
     check_num_files(".ar", ".zap", logfile=outfile_clean5G)
 
@@ -269,10 +272,12 @@ lines = tfr.split("\n")
 newlines = [
     f"chime{x.lstrip('CHIME')}\n" if x.startswith("CHIME") else "" for x in lines
 ]
-my_cmd(f"mv {newtimfile} {newtimfile.rstrip('nb.tim')}.new_toas.nb.tim", "")
-my_cmd(f"cp {args.tim} {newtimfile}", "")
 
-newtim = open(newtimfile, "a")
+newnewtimfile = f"{args.pulsar}.Rcvr_CHIME.CHIME.{today}.newtoas-all.nb.tim"
+my_cmd(f"cp {args.tim} {newnewtimfile}", "")
+
+newtim = open(newnewtimfile, "a")
+print(f"Writing new TOAs to {newnewtimfile}.\n")
 for newline in newlines:
     newtim.write(newline)
 newtim.close()

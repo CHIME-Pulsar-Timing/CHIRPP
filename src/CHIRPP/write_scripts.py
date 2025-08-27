@@ -357,7 +357,7 @@ def write_beamWeight(force_overwrite=False):
         'echo "Pulsar name found: $pulsar_name"',
         "",
         "# Run beam weighting on each file",
-        "add_beam -vv -e bmwt CHIME*.clfd >>beamWeight_${pulsar_name}-${SLURM_JOB_ID}.out 2>>beamWeight_${pulsar_name}-${SLURM_JOB_ID}.err",
+        "add_beam -vv -e bmwt CHIME*.clfd",
     ]
     write_script("beamWeight.sh", lines_beamWeight, force_overwrite=force_overwrite)
 
@@ -425,9 +425,7 @@ def write_clean(force_overwrite=False):
         'echo "Pulsar name found: $pulsar_name"',
         "",
         "# Run clfd",
-        "for f in $(ls CHIME*.zap); do",
-        "    clfd $f >> clean_${pulsar_name}-${SLURM_JOB_ID}.out 2>>clean_${pulsar_name}-${SLURM_JOB_ID}.err",
-        "done",
+        "for f in $(ls CHIME*.zap); do clfd $f; done",
     ]
     write_script("clean.sh", lines_clean, force_overwrite=force_overwrite)
 
@@ -456,9 +454,7 @@ def write_clean5G(force_overwrite=False):
         'echo "Pulsar name found: $pulsar_name"',
         "",
         "# Zap known bad channels (5G zapping from Bradley plus list of commonly bad channels from Emmanuel)",
-        "for f in $(ls CHIME*.ar); do ",
-        "    psrsh chime_zap.psh -e ar.zap $f >> clean5G_${pulsar_name}-${SLURM_JOB_ID}.out 2>>clean5G_${pulsar_name}-${SLURM_JOB_ID}.err",
-        "done",
+        "for f in $(ls CHIME*.ar); do psrsh chime_zap.psh -e ar.zap $f; done",
     ]
     write_script("clean5G.sh", lines_clean5G, force_overwrite=force_overwrite)
 
@@ -686,17 +682,11 @@ def write_ephemNconvert(force_overwrite=False):
         "# And convert to a psrfits format for compatibility downstream",
         "# Also update header DMs, if desired",
         'if [ "$dm" = "ephemeris" ]; then',
-        "    for f in $(ls CHIME*.ar); do",
-        "        pam -p -E ${par_file} --update_dm -a PSRFITS -u . $f >> ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.err",
-        "    done",
+        "    for f in $(ls CHIME*.ar); do pam -p -E ${par_file} --update_dm -a PSRFITS -u . $f; done",
         'elif [ "$dm" = true ]; then',
-        "    for f in $(ls CHIME*.ar); do",
-        "        pam -p -E ${par_file} -d ${dm} -a PSRFITS -u . $f >> ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.err",
-        "    done",
+        "    for f in $(ls CHIME*.ar); do pam -p -E ${par_file} -d ${dm} -a PSRFITS -u . $f; done",
         "else",
-        "    for f in $(ls CHIME*.ar); do",
-        "        pam -p -E ${par_file} -a PSRFITS -u . $f >> ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.out 2>>ephemNconvert_${pulsar_name}-${SLURM_JOB_ID}.err",
-        "    done",
+        "    for f in $(ls CHIME*.ar); do pam -p -E ${par_file} -a PSRFITS -u . $f; done",
         "fi",
     ]
     write_script(
@@ -1230,7 +1220,7 @@ def write_scrunch(force_overwrite=False):
         '    nsub=$(vap -nc length $f | awk -v max_subint="$max_subint" {0})'.format(
             "'{print int($2/max_subint) + 1}'"
         ),
-        "    pam --setnchn $nsubbands -e ftp --setnsub $nsub $f >> scrunch_${pulsar_name}-${SLURM_JOB_ID}.out 2>>scrunch_${pulsar_name}-${SLURM_JOB_ID}.err",
+        "    pam --setnchn $nsubbands -e ftp --setnsub $nsub $f",
         "done",
     ]
     write_script("scrunch.sh", lines_scrunch, force_overwrite=force_overwrite)
@@ -1421,7 +1411,7 @@ def write_tim_creation(force_overwrite=False):
         "",
         "    # Create the .tim file name for pat to write to",
         '    today=$(date +"%Y-%m-%d")',
-        '    tim="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.nb.tim"',
+        '    tim="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.newtoas-only.nb.tim"',
         '    echo "---------------------------------------------"',
         "",
         "    # Create the tim_run.sh file",
