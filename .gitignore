@@ -1,3 +1,7 @@
 __pycache__
 *.sh
 *.psh
+*.pdf
+*.mkv
+.DS_Store
+code_snippet_flux_cal.py

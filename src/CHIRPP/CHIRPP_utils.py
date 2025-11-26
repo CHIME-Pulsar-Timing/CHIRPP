@@ -408,10 +408,9 @@ def get_nchan(scrunch_factor, min_nchan=4, nchan_initial=1024):
 
 
 def parse_email(email_arg):
+    email = ""
     if email_arg and ("@" not in email_arg or "." not in email_arg):
         print(f"error: not a valid email: {email_arg}")
     elif email_arg:
         email = f"--mail-user={email_arg} --mail-type=END,FAIL"
-    else:
-        email = ""
     return email
