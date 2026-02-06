@@ -185,6 +185,7 @@ HOME = subprocess.check_output("echo $HOME", shell=True, text=True).strip("\n")
 
 if args.par and os.path.exists(args.par):
     print(f"Par file found: {args.par}\n")
+    parfile = args.par
     if "/" in args.par:
         n = len(args.par.split("/")[-1])
         par_dir = args.par[:-n]
