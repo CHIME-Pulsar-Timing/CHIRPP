@@ -4,6 +4,7 @@ import subprocess
 import os
 import numpy as np
 from glob import glob
+from write_scripts import *
 
 
 def my_cmd(cmd, message, checkcomplete=False, renamelog=True):
@@ -18,7 +19,7 @@ def my_cmd(cmd, message, checkcomplete=False, renamelog=True):
     if checkcomplete:
         # Check the .out file for JOB CANCELLED messages
         # and rename it including the job ID, if necessary
-        logfile = check_jobcomplete(checkcomplete, renamelog=True)
+        logfile = check_jobcomplete(checkcomplete, renamelog=renamelog)
         # Check the .err file for JOB CANCELLED messages
         _ = check_jobcomplete(f"{logfile[:-4]}.err")
         return logfile
@@ -31,14 +32,18 @@ def check_jobcomplete(logfile, renamelog=False):
     logfile = logfile
     if renamelog:
         try:
-            job_id = [x.split()[2] for x in lfr.split('\n') if x.startswith("Job ID:")][0]
+            job_id = [x.split()[2] for x in lfr.split("\n") if x.startswith("Job ID:")][
+                0
+            ]
             newlogfile = f"{logfile[:-4]}-{job_id}.out"
             cmd = f"mv {logfile} {newlogfile}"
             print(f"\n> {cmd}\n")
             subprocess.run(cmd, shell=True)
             logfile = newlogfile
         except IndexError:
-            print(f"\nCouldn't rename {logfile}: found no line giving the SLURM job ID.\n")
+            print(
+                f"\nCouldn't rename {logfile}: found no line giving the SLURM job ID.\n"
+            )
     if "TIME LIMIT" in lfr:
         print(f"\nerror: job exceeded time limit. See log file: {logfile}\n")
         exit(1)
@@ -79,7 +84,7 @@ def edit_lines(fname, param_dict):
         fnew.write(f"{newline}\n")
     fnew.close()
     # Replace file with edited version
-    a = subprocess.run(f"mv {fname_new} {fname}", shell=True)
+    subprocess.run(f"mv {fname_new} {fname}", shell=True)
 
 
 def get_nbin_dm(outfile_paramcheck):
@@ -143,27 +148,34 @@ def check_num_files(ext_1, ext_2, logfile=None, force_proceed=False):
             exit(1)
 
 
-def processing_scrunch(paralleljob_base, tjob_scrunch, pulsar):
+def processing_scrunch(base_jobname, tjob_scrunch, pulsar, newdata=False):
     exp_scrunch = [
         "Scrunch in frequency, time, and polarization.",
         "Adjust tjob with --tjob_scrunch",
     ]
     outfile_scrunch = f"scrunch_{pulsar}.out"
-    cmd_scrunch = f"{paralleljob_base}--time={tjob_scrunch} -o {outfile_scrunch} parallel_scrunch.sh"
+    if newdata:
+        cmd_scrunch = (
+            f"{base_jobname}--time={tjob_scrunch} -o {outfile_scrunch} scrunch.sh"
+        )
+    else:
+        cmd_scrunch = f"{base_jobname}--time={tjob_scrunch} -o {outfile_scrunch} parallel_scrunch.sh"
     outfile_scrunch = my_cmd(cmd_scrunch, exp_scrunch, checkcomplete=outfile_scrunch)
     return outfile_scrunch
 
 
-def make_template(tjob_template, email, pulsar, force_proceed=False):
+def make_template(
+    tjob_template, email, pulsar, force_proceed=False, force_overwrite=False
+):
     exp_templatecreation = [
         "Run the next generator script to create the next set of files",
         f"This creates a list of the 50 highest-S/N files that have the specified number of bins.",
         "Then it creates template_run.sh, which will be submitted next.",
     ]
-    jobname_templatecreation = f"template50_creation_{pulsar}"
+    jobname_templatecreation = f"template_creation_{pulsar}"
     outfile_templatecreation = f"{jobname_templatecreation}.out"
     cmd_templatecreation = sbatch_cmd(
-        "template50_creation.sh",
+        "template_creation.sh",
         email,
         mem="66G",
         jobname=jobname_templatecreation,
@@ -171,6 +183,7 @@ def make_template(tjob_template, email, pulsar, force_proceed=False):
         tjob=tjob_template,
     )
 
+    write_template_creation(force_overwrite=force_overwrite)
     outfile_templatecreation = my_cmd(
         cmd_templatecreation,
         exp_templatecreation,
@@ -230,10 +243,11 @@ def make_template(tjob_template, email, pulsar, force_proceed=False):
     return outfile_templaterun, templatefile
 
 
-def make_tim(tjob_tim, email, pulsar, ntry):
+def make_tim(tjob_tim, email, pulsar, ntry, force_overwrite=False):
     exp_timcreation = f"TOA generation: try {ntry}"
     cmd_timcreation = "./tim_creation.sh"
 
+    write_tim_creation(force_overwrite=force_overwrite)
     my_cmd(cmd_timcreation, exp_timcreation)
 
     exp_timrun = [
@@ -285,7 +299,7 @@ def make_tim(tjob_tim, email, pulsar, ntry):
         tim_new.write(newline)
     tim_new.close()
     # Replace file with edited version
-    a = subprocess.run(f"mv {timfile_new} {timfile}", shell=True)
+    subprocess.run(f"mv {timfile_new} {timfile}", shell=True)
 
     return (
         timfile,
@@ -391,3 +405,12 @@ def get_nchan(scrunch_factor, min_nchan=4, nchan_initial=1024):
         )
         exit(1)
     return nchan_initial // scrunch_factor
+
+
+def parse_email(email_arg):
+    email = ""
+    if email_arg and ("@" not in email_arg or "." not in email_arg):
+        print(f"error: not a valid email: {email_arg}")
+    elif email_arg:
+        email = f"--mail-user={email_arg} --mail-type=END,FAIL"
+    return email
