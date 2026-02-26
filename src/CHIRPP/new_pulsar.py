@@ -196,9 +196,9 @@ elif args.par and not os.path.exists(args.par):
     exit(1)
 else:
     # Check here first
-    DR3par_dir = f"{HOME}/projects/rrg-istairs-ad/DR3/NANOGrav_15y/par/tempo2"
+    DR3par_dir = "/project/rrg-istairs-ad/DR3/NANOGrav_15y/par/tempo2"
     # Check here if no pars are found
-    backuppar_dir = f"{HOME}/projects/rrg-istairs-ad/timing/tzpar"
+    backuppar_dir = "/project/rrg-istairs-ad/timing/tzpar"
     if (
         args.par_directory != "default_par_dir"
     ):  # check directories for a valid par file
@@ -235,7 +235,7 @@ if skipnum == -1:
     write_config(force_overwrite=args.force_overwrite)
 
     exp_newdata = "Grab the most recent data."
-    foldmode_dir = f"{HOME}/projects/rrg-istairs-ad/archive/pulsar/fold_mode"
+    foldmode_dir = "/project/rrg-istairs-ad/archive/pulsar/fold_mode"
     pathcheck(foldmode_dir)
     cmd_newdata = f"ln -s {foldmode_dir}/*{args.pulsar}*.ar {args.data_directory}"
 

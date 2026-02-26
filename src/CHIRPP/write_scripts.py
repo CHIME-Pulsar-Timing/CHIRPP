@@ -473,7 +473,7 @@ def write_config(force_overwrite=False):
         "data_directory=$(pwd)",
         "",
         "# Directory containing the par files",
-        'par_directory="${HOME}/projects/rrg-istairs-ad/DR3/NANOGrav_15y/par/tempo2"',
+        'par_directory="/project/rrg-istairs-ad/DR3/NANOGrav_15y/par/tempo2"',
         "",
         "###########################################################",
         "##                  Ext/params to input                  ##",
@@ -1326,7 +1326,7 @@ def write_template_creation(force_overwrite=False):
         "",
         "# We will name the template with the pulsar name and today's date",
         'today=$(date +"%Y-%m-%d")',
-        'template="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.sum.sm"',
+        'template="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.sum"',
         "",
         "# Check if par file was found and create template_run.sh",
         'if [ -n "$par_file" ]; then',
@@ -1359,8 +1359,9 @@ def write_template_creation(force_overwrite=False):
         "        echo '# Rotate template so peak is centered.'",
         "        echo 'pam -r0.5 -m added.trimmed'",
         "        echo 'psrsmooth -W added.trimmed'",
-        "        echo '# Rename the template to [JB]####+/-####.Rcvr_CHIME.CHIME.YYYY-MM-DD.sum.sm'",
-        '        echo "mv added.trimmed.sm ${template}"',
+        "        echo '# Rename the template to [JB]####+/-####.Rcvr_CHIME.CHIME.YYYY-MM-DD.sum.sm'"
+        '        echo "mv added.trimmed ${template}"',
+        '        echo "mv added.trimmed.sm ${template}.sm"',
         '    } > "$template_sh"',
         "",
         "    # Check if template_run.sh was created successfully",
@@ -1373,7 +1374,9 @@ def write_template_creation(force_overwrite=False):
     )
 
 
-def write_tim_creation(force_overwrite=False):
+def write_tim_creation(force_overwrite=False,timtype=""):
+    if len(timtype) > 0:
+        timtype = f".{timtype}"
     lines_tim_creation = [
         "#!/bin/bash",
         "",
@@ -1401,7 +1404,7 @@ def write_tim_creation(force_overwrite=False):
         "###########################################################",
         "",
         "# Check that the template specified in config.sh exists",
-        'template_path="${data_directory}/${template}"',
+        'template_path="${data_directory}/${template}.sm"',
         "",
         'if [ -e "$template_path" ]; then',
         '    tim_sh="tim_run.sh" ',
@@ -1410,7 +1413,7 @@ def write_tim_creation(force_overwrite=False):
         "",
         "    # Create the .tim file name for pat to write to",
         '    today=$(date +"%Y-%m-%d")',
-        '    tim="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.newtoas-only.nb.tim"',
+        '    tim="${pulsar_name}.Rcvr_CHIME.CHIME.${today}'+f'{timtype}.nb.tim"',
         '    echo "---------------------------------------------"',
         "",
         "    # Create the tim_run.sh file",
@@ -1440,7 +1443,7 @@ def write_tim_creation(force_overwrite=False):
         '    echo "---------------------------------------------"',
         "",
         "else",
-        '    echo "Error: smoothed template specified by config.sh (${template}) not found in ${data_directory}."',
+        '    echo "Error: smoothed template specified by config.sh (${template}.sm) not found in ${data_directory}."',
         '    echo "---------------------------------------------"',
         "    exit 1",
         "fi",
