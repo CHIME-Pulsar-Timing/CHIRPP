@@ -243,11 +243,11 @@ def make_template(
     return outfile_templaterun, templatefile
 
 
-def make_tim(tjob_tim, email, pulsar, ntry, force_overwrite=False):
+def make_tim(tjob_tim, email, pulsar, ntry, force_overwrite=False, timtype=""):
     exp_timcreation = f"TOA generation: try {ntry}"
     cmd_timcreation = "./tim_creation.sh"
 
-    write_tim_creation(force_overwrite=force_overwrite)
+    write_tim_creation(force_overwrite=force_overwrite, timtype=timtype)
     my_cmd(cmd_timcreation, exp_timcreation)
 
     exp_timrun = [

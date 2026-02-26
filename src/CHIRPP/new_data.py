@@ -242,7 +242,7 @@ exp_timcreation = [
 ]
 cmd_timcreation = "./tim_creation.sh"
 
-write_tim_creation(force_overwrite=args.force_overwrite)
+write_tim_creation(force_overwrite=args.force_overwrite, timtype="newtoas-only")
 my_cmd(cmd_timcreation, exp_timcreation)
 
 exp_newtim = "Creating our new tim file using pat."
