@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from pint_pal.lite_utils import *
 from pint_pal.noise_utils import *
 from pint_pal.par_checker import *
