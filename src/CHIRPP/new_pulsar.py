@@ -181,8 +181,6 @@ else:
 
 pathcheck(args.data_directory)
 
-HOME = subprocess.check_output("echo $HOME", shell=True, text=True).strip("\n")
-
 if args.par and os.path.exists(args.par):
     print(f"Par file found: {args.par}\n")
     parfile = args.par
@@ -242,7 +240,7 @@ if skipnum == -1:
     my_cmd(cmd_newdata, exp_newdata)
 
     exp_olddata = "Grab the older data, this will take a minute."
-    cmd_olddata = f"cp {HOME}/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
+    cmd_olddata = f"cp /nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
     my_cmd(cmd_olddata, exp_olddata)
     os.chdir(args.data_directory)
     exp_unpack = [

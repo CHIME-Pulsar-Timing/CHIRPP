@@ -51,39 +51,40 @@ def print_locs(datadirs, tars, tardirs):
     else:
         print("\nNo older data found.\n")
 
-print("\nHave you set up an SSH Tunnel? You can do so with")
-print("   ssh -L 8005:psr-head.chime:8005 $myusername@login.chimenet.ca\n")
-pulsar = input(
-    "Once you have done so, enter a pulsar name (e.g. B1937+21) to continue...\n"
-)
-print("\n")
+if __name__ == "__main__":
+    print("\nHave you set up an SSH Tunnel? You can do so with")
+    print("   ssh -L 8005:psr-head.chime:8005 $myusername@login.chimenet.ca\n")
+    pulsar = input(
+        "Once you have done so, enter a pulsar name (e.g. B1937+21) to continue...\n"
+    )
+    print("\n")
 
-url_base = "http://localhost:8005/v1/pulsars"
+    url_base = "http://localhost:8005/v1/pulsars"
 
-while True:
-    psr_get = requests.get("{0}/{1}".format(url_base, pulsar))
-    data = psr_get.json()
+    while True:
+        psr_get = requests.get("{0}/{1}".format(url_base, pulsar))
+        data = psr_get.json()
 
-    if data is None:
-        print(f"No observations found for PSR {pulsar}.\n")
-        if len(pulsar) == 10:
-            pulsar = pulsar[:-2]
-            psr_get = requests.get("{0}/{1}".format(url_base, pulsar))
-            data = psr_get.json()
-            if data is not None:
-                show = input(f"Found data for PSR {pulsar}. Show? [y/n]\n")
-                if show in ["y", "Y"]:
-                    datadirs, tars, tardirs = find_tars(data)
-                    print_locs(datadirs, tars, tardirs)
-    else:
-        datadirs, tars, tardirs = find_tars(data)
-        print_locs(datadirs, tars, tardirs)
+        if data is None:
+            print(f"No observations found for PSR {pulsar}.\n")
+            if len(pulsar) == 10:
+                pulsar = pulsar[:-2]
+                psr_get = requests.get("{0}/{1}".format(url_base, pulsar))
+                data = psr_get.json()
+                if data is not None:
+                    show = input(f"Found data for PSR {pulsar}. Show? [y/n]\n")
+                    if show in ["y", "Y"]:
+                        datadirs, tars, tardirs = find_tars(data)
+                        print_locs(datadirs, tars, tardirs)
+        else:
+            datadirs, tars, tardirs = find_tars(data)
+            print_locs(datadirs, tars, tardirs)
 
-    again = input("\nSearch for another pulsar? [y/n]\n")
-    if again.strip() in ["y", "Y"]:
-        pulsar = input(
-            "\nEnter another pulsar name...\n"
-        )
-        print("\n")
-    else:
-        sys.exit(0)
+        again = input("\nSearch for another pulsar? [y/n]\n")
+        if again.strip() in ["y", "Y"]:
+            pulsar = input(
+                "\nEnter another pulsar name...\n"
+            )
+            print("\n")
+        else:
+            sys.exit(0)
