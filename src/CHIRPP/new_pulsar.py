@@ -257,8 +257,8 @@ if skipnum == -1:
         else:
             existing_tars.append(tar)
     if len(archived_tars) > 0:
-        exp_restore = f"Files {" ".join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
-        cmd_restore = f"lfs hsm_restore {" ".join(archived_tars)}"
+        exp_restore = f"Files {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
+        cmd_restore = f"lfs hsm_restore {' '.join(archived_tars)}"
         my_cmd(cmd_restore, exp_restore)
         if len(existing_tars) > 0:
             exp_cpexisting = "In the meantime, grab existing older data."
