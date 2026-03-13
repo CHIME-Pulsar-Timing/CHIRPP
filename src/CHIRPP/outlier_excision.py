@@ -60,7 +60,7 @@ if __name__ == "__main__":
         help=".tim file location (if this option is unused, will use default from config file).",
     )
     parser.add_argument(
-        "-t",
+        "-n",
         "--epochdrop_threads",
         type=int,
         default=1,
