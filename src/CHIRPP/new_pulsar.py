@@ -240,12 +240,19 @@ if skipnum == -1:
 
     my_cmd(cmd_newdata, exp_newdata)
 
-    tars = glob(f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar")
-    states = [subprocess.run(f"lfs hsm_state {tar}", shell=True) for tar in tars] # Get file storage states
+    tars = glob(
+        f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar"
+    )
+    states = [  # Get file storage states
+        subprocess.run(f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE)
+        .stdout.decode("utf-8")
+        .strip("\n")
+        for tar in tars
+    ]
     archived_tars = []
     existing_tars = []
     for tar, state in zip(tars, states):
-        if "released" in state: # Check if file needs to be retrieved from storage
+        if "released" in state:  # Check if file needs to be retrieved from storage
             archived_tars.append(tar)
         else:
             existing_tars.append(tar)
@@ -261,7 +268,13 @@ if skipnum == -1:
             cmd_cpexisting = f"cp {tarlist} {args.data_directory}"
             my_cmd(cmd_cpexisting, exp_cpexisting)
         for tar in archived_tars:
-            state = subprocess.run(f"lfs hsm_state {tar}", shell=True)
+            state = (
+                subprocess.run(
+                    f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
+                )
+                .stdout.decode("utf-8")
+                .strip("\n")
+            )
             while "released" in state:
                 print(f"Waiting for {tar} to be restored...")
                 sleep(60)
@@ -322,7 +335,7 @@ if skipnum == -1:
     if args.rmtar:
         exp_rmtar = "Remove .tar files containing old data."
         cmd_rmtar = "rm *.tar"
-        
+
         my_cmd(cmd_rmtar, exp_rmtar)
 
 ## Get orbital period, if any, from par file. Needed later to determine T-scrunching factor ##
