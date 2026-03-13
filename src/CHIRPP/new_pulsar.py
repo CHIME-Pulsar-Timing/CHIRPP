@@ -257,9 +257,8 @@ if skipnum == -1:
         else:
             existing_tars.append(tar)
     if len(archived_tars) > 0:
-        archived_tars_str = " ".join(archived_tars)
-        exp_restore = f"Files {archived_tars_str} need to be restored from long-term storage. This may take several minutes."
-        cmd_restore = f"lfs hsm_restore {archived_tars_str}"
+        exp_restore = f"Files {" ".join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
+        cmd_restore = f"lfs hsm_restore {" ".join(archived_tars)}"
         my_cmd(cmd_restore, exp_restore)
         if len(existing_tars) > 0:
             exp_cpexisting = "In the meantime, grab existing older data."
@@ -275,9 +274,17 @@ if skipnum == -1:
                 .stdout.decode("utf-8")
                 .strip("\n")
             )
-            while "released" in state:
+            if "released" in state:
                 print(f"Waiting for {tar} to be restored...")
-                sleep(60)
+                state = (
+                    subprocess.run(
+                        f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
+                    )
+                    .stdout.decode("utf-8")
+                    .strip("\n")
+                )
+                while "released" in state:
+                    sleep(60)
             exp_cprestored = f"{tar} has been restored from storage. Copying..."
             cmd_cprestored = f"cp {tar} {args.data_directory}"
             my_cmd(cmd_cprestored, exp_cprestored)
