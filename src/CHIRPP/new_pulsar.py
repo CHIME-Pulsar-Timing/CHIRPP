@@ -276,15 +276,15 @@ if skipnum == -1:
             )
             if "released" in state:
                 print(f"Waiting for {tar} to be restored...")
-                state = (
-                    subprocess.run(
-                        f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
-                    )
-                    .stdout.decode("utf-8")
-                    .strip("\n")
-                )
                 while "released" in state:
                     sleep(60)
+                    state = (
+                        subprocess.run(
+                            f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
+                        )
+                        .stdout.decode("utf-8")
+                        .strip("\n")
+                    )
             exp_cprestored = f"{tar} has been restored from storage. Copying..."
             cmd_cprestored = f"cp {tar} {args.data_directory}"
             my_cmd(cmd_cprestored, exp_cprestored)
