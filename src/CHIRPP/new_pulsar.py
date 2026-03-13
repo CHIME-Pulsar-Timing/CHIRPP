@@ -6,6 +6,7 @@ import os
 import numpy as np
 import astropy.units as u
 from glob import glob
+from time import sleep
 from CHIRPP_utils import *
 
 
@@ -239,9 +240,38 @@ if skipnum == -1:
 
     my_cmd(cmd_newdata, exp_newdata)
 
-    exp_olddata = "Grab the older data, this will take a minute."
-    cmd_olddata = f"cp /nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
-    my_cmd(cmd_olddata, exp_olddata)
+    tars = glob(f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar")
+    states = [subprocess.run(f"lfs hsm_state {tar}", shell=True) for tar in tars] # Get file storage states
+    archived_tars = []
+    existing_tars = []
+    for tar, state in zip(tars, states):
+        if "released" in state: # Check if file needs to be retrieved from storage
+            archived_tars.append(tar)
+        else:
+            existing_tars.append(tar)
+    if len(archived_tars) > 0:
+        archived_tars_str = " ".join(archived_tars)
+        exp_restore = f"Files {archived_tars_str} need to be restored from long-term storage. This may take several minutes."
+        cmd_restore = f"lfs hsm_restore {archived_tars_str}"
+        my_cmd(cmd_restore, exp_restore)
+        if len(existing_tars) > 0:
+            exp_cpexisting = "In the meantime, grab existing older data."
+            # tarlist = " ".join([f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/{tar}" for tar in existing_tars])
+            tarlist = " ".join(existing_tars)
+            cmd_cpexisting = f"cp {tarlist} {args.data_directory}"
+            my_cmd(cmd_cpexisting, exp_cpexisting)
+        for tar in archived_tars:
+            state = subprocess.run(f"lfs hsm_state {tar}", shell=True)
+            while "released" in state:
+                print(f"Waiting for {tar} to be restored...")
+                sleep(60)
+            exp_cprestored = f"{tar} has been restored from storage. Copying..."
+            cmd_cprestored = f"cp {tar} {args.data_directory}"
+            my_cmd(cmd_cprestored, exp_cprestored)
+    else:
+        exp_olddata = print("Grab the older data, this may take a minute.\n")
+        cmd_olddata = f"cp /nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
+        my_cmd(cmd_olddata, exp_olddata)
     os.chdir(args.data_directory)
     exp_unpack = [
         f"Unpack old data to {args.data_directory}.",
