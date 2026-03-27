@@ -1374,7 +1374,7 @@ def write_template_creation(force_overwrite=False):
     )
 
 
-def write_tim_creation(force_overwrite=False,timtype=""):
+def write_tim_creation(force_overwrite=False, timtype=""):
     if len(timtype) > 0:
         timtype = f".{timtype}"
     lines_tim_creation = [
@@ -1413,7 +1413,7 @@ def write_tim_creation(force_overwrite=False,timtype=""):
         "",
         "    # Create the .tim file name for pat to write to",
         '    today=$(date +"%Y-%m-%d")',
-        '    tim="${pulsar_name}.Rcvr_CHIME.CHIME.${today}'+f'{timtype}.nb.tim"',
+        '    tim="${pulsar_name}.Rcvr_CHIME.CHIME.${today}' + f'{timtype}.nb.tim"',
         '    echo "---------------------------------------------"',
         "",
         "    # Create the tim_run.sh file",

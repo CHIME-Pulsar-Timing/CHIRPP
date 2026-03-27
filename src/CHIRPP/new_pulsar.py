@@ -458,6 +458,7 @@ if outfile_paramcheck:
 else:
     print(f"\nNo allParamCheck_{args.pulsar}-[jobID].out found.\n")
     template_nbin = None
+    dm = None
     if args.force_proceed:
         print(
             "Proceeding with template_nbin value stored in config.sh, will not update DMs.\n"
@@ -488,7 +489,6 @@ else:
             print("Using DM from par file.")
             dm = "ephemeris"
         else:
-            dm = None
             while not dm:
                 print(
                     "Press Enter to continue without updating header DMs, or type in your desired value (in pc/cc)."
