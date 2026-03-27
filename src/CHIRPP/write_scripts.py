@@ -7,21 +7,21 @@ import subprocess
 def write_script(fname, lines, force_overwrite=False):
     print(f"Writing {fname}.\n")
     if os.path.isfile(fname):
-        cmd_overwrite = f"rm {fname}"
         if not force_overwrite:
             write = False
             while not write:
-                user_input = input(f"{fname} already exists! Overwrite? [y/n]")
+                user_input = input(f"\n{fname} already exists! Overwrite? [y/n]\n")
                 if user_input == "y" or user_input == "Y":
                     write = True
                 elif user_input == "n" or user_input == "N":
                     while True:
-                        user_input = input(f"Continue with {fname} as is? [y/n]")
+                        user_input = input(f"\nContinue with {fname} as is? [y/n]\n")
                         if user_input == "y" or user_input == "Y":
                             return
                         elif user_input == "n" or user_input == "N":
                             exit(0)
-        print(f"> {cmd_overwrite}\n")
+        cmd_overwrite = f"rm {fname}"
+        print(f"\n> {cmd_overwrite}\n")
         subprocess.run(cmd_overwrite, shell=True)
     script = open(fname, "x")
     for line in lines:
@@ -1326,7 +1326,7 @@ def write_template_creation(force_overwrite=False):
         "",
         "# We will name the template with the pulsar name and today's date",
         'today=$(date +"%Y-%m-%d")',
-        'template="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.sum"',
+        'template_base="${pulsar_name}.Rcvr_CHIME.CHIME.${today}.sum"',
         "",
         "# Check if par file was found and create template_run.sh",
         'if [ -n "$par_file" ]; then',
@@ -1360,8 +1360,8 @@ def write_template_creation(force_overwrite=False):
         "        echo 'pam -r0.5 -m added.trimmed'",
         "        echo 'psrsmooth -W added.trimmed'",
         "        echo '# Rename the template to [JB]####+/-####.Rcvr_CHIME.CHIME.YYYY-MM-DD.sum.sm'"
-        '        echo "mv added.trimmed ${template}"',
-        '        echo "mv added.trimmed.sm ${template}.sm"',
+        '        echo "mv added.trimmed ${template_base}"',
+        '        echo "mv added.trimmed.sm ${template_base}.sm"',
         '    } > "$template_sh"',
         "",
         "    # Check if template_run.sh was created successfully",
@@ -1404,7 +1404,7 @@ def write_tim_creation(force_overwrite=False,timtype=""):
         "###########################################################",
         "",
         "# Check that the template specified in config.sh exists",
-        'template_path="${data_directory}/${template}.sm"',
+        'template_path="${data_directory}/${template}"',
         "",
         'if [ -e "$template_path" ]; then',
         '    tim_sh="tim_run.sh" ',

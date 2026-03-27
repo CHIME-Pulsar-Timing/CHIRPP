@@ -257,11 +257,11 @@ if skipnum == -1:
         else:
             existing_tars.append(tar)
     if len(archived_tars) > 0:
-        exp_restore = f"Files {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
+        exp_restore = f"{'Files' if len(archived_tars) > 1 else 'File'} {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
         cmd_restore = f"lfs hsm_restore {' '.join(archived_tars)}"
         my_cmd(cmd_restore, exp_restore)
         if len(existing_tars) > 0:
-            exp_cpexisting = "In the meantime, grab existing older data."
+            exp_cpexisting = "In the meantime, collect available older data."
             # tarlist = " ".join([f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/{tar}" for tar in existing_tars])
             tarlist = " ".join(existing_tars)
             cmd_cpexisting = f"cp {tarlist} {args.data_directory}"
