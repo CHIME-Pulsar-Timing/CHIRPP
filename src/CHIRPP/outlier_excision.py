@@ -96,7 +96,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     if args.run_analysis:
-        to, tc, mo = run_outlier_analysis(args.config, args.par_directory, args.tim_directory, args.epochdrop_threads, args.load_pout)
+        to, tc, mo = run_outlier_analysis(args.config, args.par_directory, args.tim_directory, args.epochdrop_threads, args.pout)
     if not args.autorun:
         file_matches, toa_matches = tc.get_investigation_files()
         # Quick breakdown of existing cut flags (automated excision)
