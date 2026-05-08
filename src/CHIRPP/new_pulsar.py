@@ -6,6 +6,7 @@ import os
 import numpy as np
 import astropy.units as u
 from glob import glob
+from time import sleep
 from CHIRPP_utils import *
 
 
@@ -181,8 +182,6 @@ else:
 
 pathcheck(args.data_directory)
 
-HOME = subprocess.check_output("echo $HOME", shell=True, text=True).strip("\n")
-
 if args.par and os.path.exists(args.par):
     print(f"Par file found: {args.par}\n")
     parfile = args.par
@@ -241,9 +240,58 @@ if skipnum == -1:
 
     my_cmd(cmd_newdata, exp_newdata)
 
-    exp_olddata = "Grab the older data, this will take a minute."
-    cmd_olddata = f"cp {HOME}/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
-    my_cmd(cmd_olddata, exp_olddata)
+    tars = glob(
+        f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar"
+    )
+    states = [  # Get file storage states
+        subprocess.run(f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE)
+        .stdout.decode("utf-8")
+        .strip("\n")
+        for tar in tars
+    ]
+    archived_tars = []
+    existing_tars = []
+    for tar, state in zip(tars, states):
+        if "released" in state:  # Check if file needs to be retrieved from storage
+            archived_tars.append(tar)
+        else:
+            existing_tars.append(tar)
+    if len(archived_tars) > 0:
+        exp_restore = f"{'Files' if len(archived_tars) > 1 else 'File'} {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
+        cmd_restore = f"lfs hsm_restore {' '.join(archived_tars)}"
+        my_cmd(cmd_restore, exp_restore)
+        if len(existing_tars) > 0:
+            exp_cpexisting = "In the meantime, collect available older data."
+            # tarlist = " ".join([f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/{tar}" for tar in existing_tars])
+            tarlist = " ".join(existing_tars)
+            cmd_cpexisting = f"cp {tarlist} {args.data_directory}"
+            my_cmd(cmd_cpexisting, exp_cpexisting)
+        for tar in archived_tars:
+            state = (
+                subprocess.run(
+                    f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
+                )
+                .stdout.decode("utf-8")
+                .strip("\n")
+            )
+            if "released" in state:
+                print(f"Waiting for {tar} to be restored...")
+                while "released" in state:
+                    sleep(60)
+                    state = (
+                        subprocess.run(
+                            f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
+                        )
+                        .stdout.decode("utf-8")
+                        .strip("\n")
+                    )
+            exp_cprestored = f"{tar} has been restored from storage. Copying..."
+            cmd_cprestored = f"cp {tar} {args.data_directory}"
+            my_cmd(cmd_cprestored, exp_cprestored)
+    else:
+        exp_olddata = print("Grab the older data, this may take a minute.\n")
+        cmd_olddata = f"cp /nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
+        my_cmd(cmd_olddata, exp_olddata)
     os.chdir(args.data_directory)
     exp_unpack = [
         f"Unpack old data to {args.data_directory}.",
@@ -294,7 +342,7 @@ if skipnum == -1:
     if args.rmtar:
         exp_rmtar = "Remove .tar files containing old data."
         cmd_rmtar = "rm *.tar"
-        
+
         my_cmd(cmd_rmtar, exp_rmtar)
 
 ## Get orbital period, if any, from par file. Needed later to determine T-scrunching factor ##
@@ -410,6 +458,7 @@ if outfile_paramcheck:
 else:
     print(f"\nNo allParamCheck_{args.pulsar}-[jobID].out found.\n")
     template_nbin = None
+    dm = None
     if args.force_proceed:
         print(
             "Proceeding with template_nbin value stored in config.sh, will not update DMs.\n"
@@ -440,7 +489,6 @@ else:
             print("Using DM from par file.")
             dm = "ephemeris"
         else:
-            dm = None
             while not dm:
                 print(
                     "Press Enter to continue without updating header DMs, or type in your desired value (in pc/cc)."

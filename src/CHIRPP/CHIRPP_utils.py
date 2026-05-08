@@ -351,18 +351,20 @@ def get_scrunch_factor(snr_25pct, snr_threshold=8, mean_nsubint=1):
     Determine the power of two to frequency scrunch by,
     given a S/N threshold and the 25th percentile S/N.
     """
-
-    scrunch_factor = ((snr_threshold / snr_25pct) ** 2) // mean_nsubint
-    if scrunch_factor < 1:
-        # Do not scrunch further
-        return 1
-    power = 1
-    # Always default to a higher power (fewer subbands).
-    # Recall, fewer subbands means more signal in each channel,
-    # ensuring no more than 25% being cut.
-    while power <= scrunch_factor:
-        # Increment by 2 e.g. 2, 4, 8...
-        power *= 2
+    if snr_25pct > 0:
+        scrunch_factor = ((snr_threshold / snr_25pct) ** 2) // mean_nsubint
+        if scrunch_factor < 1:
+            # Do not scrunch further
+            return 1
+        power = 1
+        # Always default to a higher power (fewer subbands).
+        # Recall, fewer subbands means more signal in each channel,
+        # ensuring no more than 25% being cut.
+        while power <= scrunch_factor:
+            # Increment by 2 e.g. 2, 4, 8...
+            power *= 2
+    else:
+        power = 2
     return power
 
 

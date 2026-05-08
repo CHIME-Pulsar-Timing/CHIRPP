@@ -18,7 +18,7 @@ import argparse
 from CHIRPP_utils import get_nchan, get_scrunch_factor, get_snr_pct
 
 if __name__ == "__main__":
-    # Set up argparse to handle the command line input with flag -e
+    # Set up argparse to handle command line input
     parser = argparse.ArgumentParser(
         description="Determine scrunch factor based on S/N."
     )
