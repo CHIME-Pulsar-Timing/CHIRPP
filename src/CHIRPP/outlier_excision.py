@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
 from pint_pal.lite_utils import *
-from pint_pal.noise_utils import *
+# from pint_pal.noise_utils import *
 from pint_pal.par_checker import *
 from pint_pal.utils import *
 from pint_pal.dmx_utils import *
 from pint_pal.timingconfiguration import TimingConfiguration
 from pint_pal.outlier_utils import *
-from pint_pal.utils import apply_cut_flag, apply_cut_select
+# from pint_pal.utils import apply_cut_flag, apply_cut_select
 from pint_pal.plot_utils import plot_residuals_time
-from pint.utils import dmxparse
+# from pint.utils import dmxparse
 import argparse
 
 def run_outlier_analysis(config, par_directory=None, tim_directory=None, epochdrop_threads=1, load_pout=None):
