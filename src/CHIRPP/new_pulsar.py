@@ -276,6 +276,9 @@ if skipnum == -1:
             cmd_cpexisting = f"cp {tarlist} {args.data_directory}"
             my_cmd(cmd_cpexisting, exp_cpexisting)
         for tar in archived_tars:
+            exp_restore = f"Restore {tar.split('/')[-1]} from long-term storage. This may take several minutes."
+            cmd_restore = f"lfs hsm_restore {tar}"
+            my_cmd(cmd_restore, exp_restore)
             state = (
                 subprocess.run(
                     f"lfs hsm_state {tar}", shell=True, stdout=subprocess.PIPE
