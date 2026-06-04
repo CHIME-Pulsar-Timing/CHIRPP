@@ -14,11 +14,11 @@ from astropy.visualization import quantity_support
 quantity_support()
 
 
-def update_timing(config, par_directory=None, tim_directory=None, plots=False):
+def update_timing(config, par_directory=None, tim_directory=None, plots=False, excised_tim=False):
     tc = TimingConfiguration(
         config, par_directory=par_directory, tim_directory=tim_directory
     )
-    mo, to = tc.get_model_and_toas(excised=False, usepickle=False)
+    mo, to = tc.get_model_and_toas(excised=excised_tim, usepickle=False)
     to.compute_pulse_numbers(mo)
     # Ensure DMX windows are calculated properly, set non-binary epochs to the center of the data span
     to = du.setup_dmx(
@@ -62,6 +62,11 @@ if __name__ == "__main__":
         "--plots",
         help="Generate residual & DMX plots after fitting.",
         action="store_true",
+    )
+    parser.add_argument(
+        "--excised_tim",
+        action="store_true",
+        help="Use the excised .tim file specified in the config file"
     )
     args = parser.parse_args()
 

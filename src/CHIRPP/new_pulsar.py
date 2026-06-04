@@ -40,6 +40,9 @@ parser.add_argument(
     "--skip", choices=pipeline_steps, type=str, help="Skip to the specified step."
 )
 parser.add_argument(
+    "--stop", choices=pipeline_steps, type=str, help="Stop after the specified step."
+)
+parser.add_argument(
     "--max_cpus",
     type=int,
     default=10,
@@ -179,6 +182,14 @@ if args.skip:
         exit(1)
 else:
     skipnum = -1
+if args.stop:
+    try:
+        stopnum = np.where(args.stop == pipeline_steps)[0][0]
+    except IndexError:
+        print(f"error: use a valid pipeline step with --stop, one of: {pipeline_steps}")
+        exit(1)
+else:
+    stopnum = 999
 
 pathcheck(args.data_directory)
 
@@ -257,9 +268,7 @@ if skipnum == -1:
         else:
             existing_tars.append(tar)
     if len(archived_tars) > 0:
-        exp_restore = f"{'Files' if len(archived_tars) > 1 else 'File'} {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes."
-        cmd_restore = f"lfs hsm_restore {' '.join(archived_tars)}"
-        my_cmd(cmd_restore, exp_restore)
+        print(f"{'Files' if len(archived_tars) > 1 else 'File'} {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes.\n")
         if len(existing_tars) > 0:
             exp_cpexisting = "In the meantime, collect available older data."
             # tarlist = " ".join([f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/{tar}" for tar in existing_tars])
@@ -532,7 +541,7 @@ param_values = [
 config_dict = dict(zip(param_names, param_values))
 edit_lines("config.sh", config_dict)
 
-if skipnum < 7:
+if skipnum < 7 and stopnum > 3:
     exp_processing_creation = (
         "Make the files that list the commands to run with GNU parallel."
     )
@@ -543,7 +552,7 @@ if skipnum < 7:
 
 paralleljob_base = sbatch_cmd(None, email, mem="126G")
 
-if skipnum < 3:
+if skipnum < 3 and stopnum > 3:
     exp_ephemNconvert = [
         "Install ephemeris before averaging to ensure best data quality.",
         "Adjust tjob with --tjob_ephemNconvert",
@@ -555,7 +564,7 @@ if skipnum < 3:
         cmd_ephemNconvert, exp_ephemNconvert, checkcomplete=outfile_ephemNconvert
     )
 
-if skipnum < 4:
+if skipnum < 4 and stopnum > 4:
     exp_clean5G = [
         "Zap known bad channels on all archive files (*.ar).",
         "Adjust tjob with --tjob_clean5G",
@@ -569,7 +578,9 @@ if skipnum < 4:
         ".ar", ".zap", logfile=outfile_clean5G, force_proceed=args.force_proceed
     )
 
-if skipnum < 5:
+### APPLY TCUTOFF/FCUTOFF AFTER CLEAN!
+
+if skipnum < 5 and stopnum > 5:
     exp_clean = [
         "Run clfd.",
         "Adjust tjob with --tjob_clean",
@@ -582,7 +593,7 @@ if skipnum < 5:
         ".zap", ".zap.clfd", logfile=outfile_clean, force_proceed=args.force_proceed
     )
 
-if skipnum < 6:
+if skipnum < 6 and stopnum > 6:
     exp_beamWeight = [
         "Run beam weighting.",
         "Adjust tjob with --tjob_beamweight",
@@ -624,7 +635,7 @@ if skipnum < 6:
             "If you don't notice any drifting in pulse phase in both sets of plots, press Enter to continue...\n"
         )
 
-if skipnum < 7:
+if skipnum < 7 and stopnum > 7:
     outfile_scrunch = processing_scrunch(
         paralleljob_base, args.tjob_scrunch, args.pulsar
     )
@@ -632,7 +643,7 @@ if skipnum < 7:
         ".bmwt.clfd", ".ftp", logfile=outfile_scrunch, force_proceed=args.force_proceed
     )
 
-if skipnum < 8:
+if skipnum < 8 and stopnum > 8:
     outfile_templaterun, templatefile = make_template(
         args.tjob_template,
         email,
@@ -661,7 +672,7 @@ else:
         )
         exit(1)
 
-if skipnum < 9:
+if skipnum < 9 and stopnum > 9:
     ntry = 1
     timfile, outfile_timrun, tim_nchan, snr_25pct, snr_mean, scrunch_factor, ntoas = (
         make_tim(
