@@ -5,3 +5,4 @@ __pycache__
 *.mkv
 .DS_Store
 code_snippet_flux_cal.py
+.ipynb_checkpoints/
