@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-import pint_pal.par_checker as pc
 import pint_pal.dmx_utils as du
 import pint_pal.lite_utils as lu
 # import pint_pal.noise_utils as nu
-import pint_pal.plot_utils as pu
 from pint_pal.timingconfiguration import TimingConfiguration
 from pint.fitter import ConvergenceFailure
 # import pint.fitter
 # from pint.utils import dmxparse
 from astropy.visualization import quantity_support
+from plot_diagnostics import plot_timing_diagnostics
 
 quantity_support()
 
@@ -35,11 +34,7 @@ def update_timing(config, par_directory=None, tim_directory=None, plots=False, e
         print("Fitter failed to converge.")
     lu.write_par(fo, toatype=tc.get_toa_type(), addext="_prenoise", include_date=True)
     if plots:
-        pu.plot_residuals(fo, to, tc.get_toa_type(), title="Post-Fit Residuals")
-        pu.plot_dmx(fo, to, tc.get_toa_type(), title="Post-Fit DMX")
-        if pc.check_binary(fo.model):
-            pu.plot_binary(fo, to, tc.get_toa_type(), title="Post-Fit Residuals")
-
+        plot_timing_diagnostics(fo)
 
 if __name__ == "__main__":
     import argparse
@@ -75,4 +70,5 @@ if __name__ == "__main__":
         par_directory=args.par_directory,
         tim_directory=args.tim_directory,
         plots=args.plots,
+        excised_tim=args.excised_tim,
     )
