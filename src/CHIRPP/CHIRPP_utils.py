@@ -412,7 +412,106 @@ def get_nchan(scrunch_factor, min_nchan=4, nchan_initial=1024):
 def parse_email(email_arg):
     email = ""
     if email_arg and ("@" not in email_arg or "." not in email_arg):
-        print(f"error: not a valid email: {email_arg}")
+        print(f"warning: not a valid email: {email_arg}")
+        print(f"warning: email notifications will not be sent.")
     elif email_arg:
         email = f"--mail-user={email_arg} --mail-type=END,FAIL"
     return email
+
+def write_yaml(name, par_file, tim_files, overwrite=False, par_directory="./", tim_directory="./", compare_model="", noise_dir="./", compare_noise_dir="", excised_tim="None", mjd_start="", mjd_end=""):
+    """
+    Write a YAML file for use with PINT_pal
+    """
+    free_params = []
+    with open(f"{par_directory}/{par_file}") as par:
+        par_lines = par.readlines()
+        for line in par_lines:
+            if line.split()[2] == "1":
+                free_param_name = line.split()[0]
+                free_params.append(free_param_name)
+    if noise_dir == "./":
+        if compare_noise_dir == "":
+            emp_distribution = ""
+        else:
+            emp_distribution = f"{compare_noise_dir}/{name}_nb"
+    else:
+        emp_distribution = f"{noise_dir}/{name}_nb"
+    lines_yaml_start = [
+        f"source: {name}",
+        f"par-directory: {par_directory}",
+        f"tim-directory: {tim_directory}",
+        f"timing-model: {par_file}",
+        f"compare-model: {compare_model}",
+        "toas:"
+    ]
+    if isinstance(tim_files, list):
+        for tim_file in tim_files:
+            lines_yaml_start.append(f" - {tim_file}")
+    else:
+        lines_yaml_start.append(f" - {tim_files}")
+    lines_yaml_end = [
+        "",
+        f"free-params: [', '.join(free_params)]",
+        "free-dmx: Yes",
+        "toa-type: NB",
+        "n-iterations: 20",
+        "ephem: DE440",
+        "bipm: BIPM2023",
+        "",
+        "dmx:  # control dmx windowing/fixing",
+        "  ignore-dmx: false",
+        "  fratio: 1.1",
+        "  max-sw-delay: 0.1 # finer binning when solar wind delay > threshold (us)",
+        "  custom-dmx: [] # designated by [mjd_low,mjd_hi,binsize]",
+        "outlier: #control outlier analysis runs",
+        "  method: gibbs",
+        "  n-burn: 1000",
+        "  n-samples: 20000",
+        "",
+        "noise_run:",
+        "  model:",
+        "    inc_rn: true",
+        "    inc_dmgp: false",
+        "    inc_chromgp: false",
+        "  inference:",
+        "    likelihood: enterprise",
+        "    sampler: PTMCMCSampler",
+        "    n_iter: 250000",
+        f"    emp_distribution: {emp_distribution}",
+        "",
+        "intermediate-results: # use results from previous runs",
+        f"  noise-dir: {noise_dir}",
+        f"  compare-noise-dir: {compare_noise_dir}",
+        f"  excised-tim: {excised_tim}",
+        "  no-corner: true",
+        "ignore: # toa excision",
+        "  orphaned-rec:",
+        "  poor-febe:",
+        f"  mjd-start: {mjd_start}",
+        f"  mjd-end: {mjd_end}",
+        "  snr-cut: 8",
+        "  bad-toa:",
+        "  bad-range:",
+        "  - [0, 58600, CHIME]",
+        "  bad-file:",
+        "  prob-outlier: 0.1",
+        "",
+        "check:  # check before final",
+        "  toa-outliers:",
+        "  dmx-outliers:",
+        "  unusual-params",
+        "  other:",
+        "  cleared: false",
+        "",
+    ]
+    lines_yaml = lines_yaml_start + lines_yaml_end
+    yamlfile = f"{name}.nb.yaml"
+    if os.path.exists(yamlfile) and not overwrite:
+        print(f"\nerror: {yamlfile} already exists! Use -o/--force_overwrite to overwrite it.\n")
+        exit(1)
+    else:
+        with open(yamlfile, "w") as f:
+            for line in lines_yaml:
+                f.write(f"{line}\n")
+    return yamlfile
+    

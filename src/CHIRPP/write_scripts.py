@@ -11,14 +11,14 @@ def write_script(fname, lines, force_overwrite=False):
             write = False
             while not write:
                 user_input = input(f"\n{fname} already exists! Overwrite? [y/n]\n")
-                if user_input == "y" or user_input == "Y":
+                if user_input in "yY":
                     write = True
-                elif user_input == "n" or user_input == "N":
+                elif user_input in "nN":
                     while True:
                         user_input = input(f"\nContinue with {fname} as is? [y/n]\n")
-                        if user_input == "y" or user_input == "Y":
+                        if user_input in "yY":
                             return
-                        elif user_input == "n" or user_input == "N":
+                        elif user_input in "nN":
                             exit(0)
         cmd_overwrite = f"rm {fname}"
         print(f"\n> {cmd_overwrite}\n")

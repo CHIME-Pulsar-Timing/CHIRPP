@@ -240,6 +240,11 @@ else:
             exit(1)
 print(f'Using "{par_dir}" as par_directory.')
 print(f"Found .par file in par_directory: {parfile.split('/')[-1]}\n")
+# Copy par file to data directory if not already there
+if not os.path.exists(f"{args.data_directory}/{parfile.split('/')[-1]}"):
+    exp_copypardir = f"Copy {parfile.split('/')[-1]} to {args.data_directory}."
+    cmd_copypardir = f"cp {parfile} {args.data_directory}"
+    my_cmd(cmd_copypardir, exp_copypardir)
 
 if skipnum == -1:
     write_config(force_overwrite=args.force_overwrite)
@@ -271,12 +276,11 @@ if skipnum == -1:
         print(f"{'Files' if len(archived_tars) > 1 else 'File'} {' '.join([tar.split('/')[-1] for tar in archived_tars])} need to be restored from long-term storage. This may take several minutes.\n")
         if len(existing_tars) > 0:
             exp_cpexisting = "In the meantime, collect available older data."
-            # tarlist = " ".join([f"/nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/{tar}" for tar in existing_tars])
             tarlist = " ".join(existing_tars)
             cmd_cpexisting = f"cp {tarlist} {args.data_directory}"
             my_cmd(cmd_cpexisting, exp_cpexisting)
         for tar in archived_tars:
-            exp_restore = f"Restore {tar.split('/')[-1]} from long-term storage. This may take several minutes."
+            exp_restore = f"Restoring {tar.split('/')[-1]} from long-term storage. This may take several minutes."
             cmd_restore = f"lfs hsm_restore {tar}"
             my_cmd(cmd_restore, exp_restore)
             state = (
@@ -301,7 +305,7 @@ if skipnum == -1:
             cmd_cprestored = f"cp {tar} {args.data_directory}"
             my_cmd(cmd_cprestored, exp_cprestored)
     else:
-        exp_olddata = print("Grab the older data, this may take a minute.\n")
+        exp_olddata = "Grab the older data, this may take a minute."
         cmd_olddata = f"cp /nearline/rrg-istairs-ad/archive/pulsar/chime/fold_mode/{args.pulsar}/*tar {args.data_directory}"
         my_cmd(cmd_olddata, exp_olddata)
     os.chdir(args.data_directory)
@@ -774,23 +778,31 @@ else:
         timfile = "mytoas.tim"
         ntoas = None
 
+if stopnum > 9:
+    # Create yaml file for use with PINT_pal
+    yamlfile = write_yaml(
+        args.pulsar,
+        parfile,
+        timfile,
+        force_overwrite=args.force_overwrite,
+    )
+    print(
+        "\n####################################################################################################\n"
+    )
+    print(
+        f"To print the information below again, run `new_pulsar.py --skip complete {args.pulsar}`"
+    )
+    print(
+        "\n####################################################################################################\n\n"
+    )
+    print("Pipeline completed! Take a look at your new .tim file, perhaps with...\n")
+    if ntoas:
+        print(f"tempo2 -nofit -npsr 1 -nobs {ntoas+10} -gr plk -f {parfile} {timfile}\n")
+    else:
+        print(f"tempo2 -nofit -npsr 1 -gr plk -f {parfile} {timfile}\n")
 
-print(
-    "\n####################################################################################################\n"
-)
-print(
-    f"To print the information below again, run `new_pulsar.py --skip complete {args.pulsar}`"
-)
-print(
-    "\n####################################################################################################\n\n"
-)
-print("Pipeline completed! Take a look at your new .tim file, perhaps with...\n")
-if ntoas:
-    print(f"tempo2 -nofit -npsr 1 -nobs {ntoas+10} -gr plk -f {parfile} {timfile}\n")
-else:
-    print(f"tempo2 -nofit -npsr 1 -gr plk -f {parfile} {timfile}\n")
-
-print("...or with PINT, as you prefer.")
-print(
-    f"If the timing solution is a poor fit to the data, consider re-running the pipeline with a re-fit .par file (use the --par option), starting from the processing step (--skip processing).\n"
-)
+    print("...or with PINT, as you prefer. A YAML file has been created for use with PINT_pal:\n")
+    print(f"  {yamlfile}\n")
+    print(
+        f"If the timing solution is a poor fit to the data, consider re-running the pipeline with a re-fit .par file (use the --par option), starting from the processing step (--skip processing).\n"
+    )
