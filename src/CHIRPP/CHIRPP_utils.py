@@ -401,11 +401,11 @@ def get_snr_pct(percentile=25, extension=".bmwt.zap", max_subint=3600.0, timfile
 
 def get_nchan(scrunch_factor, min_nchan=4, nchan_initial=1024):
     scrunch_factor = min(scrunch_factor, nchan_initial // min_nchan)
-    if nchan_initial % scrunch_factor != 0:
-        print(
-            f"error: invalid scrunch_factor! {nchan_initial} not divisible by {scrunch_factor}!"
-        )
-        exit(1)
+    if scrunch_factor < 1:
+        scrunch_factor = 1
+    elif nchan_initial % scrunch_factor != 0:
+        # get nearest power of two that divides nchan_initial
+        scrunch_factor = 2 ** int(np.log2(nchan_initial // scrunch_factor))
     return nchan_initial // scrunch_factor
 
 
@@ -436,16 +436,26 @@ def write_yaml(
     """
     Write a YAML file for use with PINT_pal
     """
+    # check that par_file exists in par_directory and tim_files exist in tim_directory
+    if not os.path.exists(f"{par_directory}/{par_file}"):
+        print(f"error: par file not found: {par_directory}/{par_file}")
+        print("PINT_pal YAML file not written.")
+        exit(1)
+    for tim_file in tim_files:
+        if not os.path.exists(f"{tim_directory}/{tim_file}"):
+            print(f"error: tim file not found: {tim_directory}/{tim_file}")
+            print("PINT_pal YAML file not written.")
+            exit(1)
     free_params = []
     binary = False
     with open(f"{par_directory}/{par_file}") as par:
         par_lines = par.readlines()
         for line in par_lines:
-            if len(line.split()) > 2:
-                if line.split()[2] == "1":
-                    free_param_name = line.split()[0]
-                    if "DM" not in free_param_name:
-                        free_params.append(free_param_name)
+            if line.split()[0] == "BINARY":
+                try:
+                    binary = line.split()[1]
+                except IndexError:
+                    print(f"warning: par file has BINARY line but no model specified.")
             elif line.split()[0] in [
                 "RAJ",
                 "DECJ",
@@ -474,9 +484,15 @@ def write_yaml(
                 "E",
                 "ECC",
             ]:
+                if len(line.split()) > 2:
+                    if line.split()[2] == "0":
+                        continue
                 free_params.append(line.split()[0])
-            elif line.split()[0] == "BINARY":
-                binary = line.split()[1]
+            elif len(line.split()) > 2:
+                if line.split()[2] == "1":
+                    free_param_name = line.split()[0]
+                    if "DM" not in free_param_name:
+                        free_params.append(free_param_name)
     position_params = [["RAJ", "DECJ"], ["LAMBDA", "BETA"], ["ELONG", "ELAT"]]
     no_position = True
     for param_pair in position_params:
@@ -506,11 +522,13 @@ def write_yaml(
     if binary:
         missing_orb = False
         ell1_params = ["PB", "A1", "TASC", "EPS1", "EPS2"]
-        kepler_params = ["PB", "T0", "OM", "E", "ECC"]
+        kepler_params = ["PB", "A1", "T0", "OM", "ECC"]
         if "ELL1" in binary:
             missing_orb = [param for param in ell1_params if param not in free_params]
         else:
             missing_orb = [param for param in kepler_params if param not in free_params]
+            if "ECC" in missing_orb and "E" in free_params:
+                missing_orb.remove("ECC")
         if missing_orb:
             print(
                 f"warning: pulsar is binary with {binary} model, but par file lacks {', '.join(missing_orb)}."
