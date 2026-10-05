@@ -418,17 +418,103 @@ def parse_email(email_arg):
         email = f"--mail-user={email_arg} --mail-type=END,FAIL"
     return email
 
-def write_yaml(name, par_file, tim_files, overwrite=False, par_directory="./", tim_directory="./", compare_model="", noise_dir="./", compare_noise_dir="", excised_tim="None", mjd_start="", mjd_end=""):
+
+def write_yaml(
+    name,
+    par_file,
+    tim_files,
+    overwrite=False,
+    par_directory="./",
+    tim_directory="./",
+    compare_model="",
+    noise_dir="./",
+    compare_noise_dir="",
+    excised_tim="None",
+    mjd_start="",
+    mjd_end="",
+):
     """
     Write a YAML file for use with PINT_pal
     """
     free_params = []
+    binary = False
     with open(f"{par_directory}/{par_file}") as par:
         par_lines = par.readlines()
         for line in par_lines:
-            if line.split()[2] == "1":
-                free_param_name = line.split()[0]
-                free_params.append(free_param_name)
+            if len(line.split()) > 2:
+                if line.split()[2] == "1":
+                    free_param_name = line.split()[0]
+                    if "DM" not in free_param_name:
+                        free_params.append(free_param_name)
+            elif line.split()[0] in [
+                "RAJ",
+                "DECJ",
+                "LAMBDA",
+                "BETA",
+                "ELONG",
+                "ELAT",
+                "F0",
+                "F1",
+                "P",
+                "PDOT",
+                "PMRA",
+                "PMDEC",
+                "PMELONG",
+                "PMELAT",
+                "PMLAMBDA",
+                "PMBETA",
+                "PX",
+                "PB",
+                "A1",
+                "TASC",
+                "EPS1",
+                "EPS2",
+                "T0",
+                "OM",
+                "E",
+                "ECC",
+            ]:
+                free_params.append(line.split()[0])
+            elif line.split()[0] == "BINARY":
+                binary = line.split()[1]
+    position_params = [["RAJ", "DECJ"], ["LAMBDA", "BETA"], ["ELONG", "ELAT"]]
+    no_position = True
+    for param_pair in position_params:
+        if all(param in free_params for param in param_pair):
+            no_position = False
+            break
+    if no_position:
+        print("warning: par file lacks one or more position parameters.")
+    no_pm = True
+    pm_params = [["PMRA", "PMDEC"], ["PMELONG", "PMELAT"], ["PMLAMBDA", "PMBETA"]]
+    for param_pair in pm_params:
+        if all(param in free_params for param in param_pair):
+            no_pm = False
+            break
+    if no_pm:
+        print("warning: par file lacks one or more proper motion parameters.")
+    if "PX" not in free_params:
+        print("warning: par file lacks PX.")
+    no_spin = True
+    spin_params = [["F0", "F1"], ["P", "PDOT"]]
+    for param_pair in spin_params:
+        if all(param in free_params for param in param_pair):
+            no_spin = False
+            break
+    if no_spin:
+        print("warning: par file lacks spin and/or spin derivative parameters.")
+    if binary:
+        missing_orb = False
+        ell1_params = ["PB", "A1", "TASC", "EPS1", "EPS2"]
+        kepler_params = ["PB", "T0", "OM", "E", "ECC"]
+        if "ELL1" in binary:
+            missing_orb = [param for param in ell1_params if param not in free_params]
+        else:
+            missing_orb = [param for param in kepler_params if param not in free_params]
+        if missing_orb:
+            print(
+                f"warning: pulsar is binary with {binary} model, but par file lacks {', '.join(missing_orb)}."
+            )
     if noise_dir == "./":
         if compare_noise_dir == "":
             emp_distribution = ""
@@ -442,7 +528,7 @@ def write_yaml(name, par_file, tim_files, overwrite=False, par_directory="./", t
         f"tim-directory: {tim_directory}",
         f"timing-model: {par_file}",
         f"compare-model: {compare_model}",
-        "toas:"
+        "toas:",
     ]
     if isinstance(tim_files, list):
         for tim_file in tim_files:
@@ -451,7 +537,7 @@ def write_yaml(name, par_file, tim_files, overwrite=False, par_directory="./", t
         lines_yaml_start.append(f" - {tim_files}")
     lines_yaml_end = [
         "",
-        f"free-params: [', '.join(free_params)]",
+        f"free-params: [{', '.join(free_params)}]",
         "free-dmx: Yes",
         "toa-type: NB",
         "n-iterations: 20",
@@ -507,11 +593,12 @@ def write_yaml(name, par_file, tim_files, overwrite=False, par_directory="./", t
     lines_yaml = lines_yaml_start + lines_yaml_end
     yamlfile = f"{name}.nb.yaml"
     if os.path.exists(yamlfile) and not overwrite:
-        print(f"\nerror: {yamlfile} already exists! Use -o/--force_overwrite to overwrite it.\n")
+        print(
+            f"\nerror: {yamlfile} already exists! Use -o/--force_overwrite to overwrite it.\n"
+        )
         exit(1)
     else:
         with open(yamlfile, "w") as f:
             for line in lines_yaml:
                 f.write(f"{line}\n")
     return yamlfile
-    

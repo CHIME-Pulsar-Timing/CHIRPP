@@ -782,9 +782,9 @@ if stopnum > 9:
     # Create yaml file for use with PINT_pal
     yamlfile = write_yaml(
         args.pulsar,
-        parfile,
+        parfile.split('/')[-1],
         timfile,
-        force_overwrite=args.force_overwrite,
+        overwrite=args.force_overwrite,
     )
     print(
         "\n####################################################################################################\n"
